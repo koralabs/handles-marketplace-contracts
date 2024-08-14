@@ -1,0 +1,21 @@
+{
+  "name": "handles-marketplace-contracts",
+  "version": "1.0.0",
+  "description": "Smart Contract of Ada Handles Marketplace",
+  "type": "module",
+  "scripts": {
+    "test": "tsx -r dotenv/config tests/txTests.ts"
+  },
+  "keywords": [],
+  "author": "Kora Labs <hello@koralabs.io>",
+  "license": "ISC",
+  "devDependencies": {
+    "@koralabs/helios": "^0.16.8-2",
+    "@koralabs/kora-labs-common": "^4.3.7",
+    "@koralabs/kora-labs-contract-testing": "^0.0.9",
+    "@types/node": "^22.1.0",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.17.0"
+  }
+}
