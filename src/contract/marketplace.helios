@@ -38,7 +38,9 @@ enum Redeemer {
 
 // ---------- Parameters ----------
 const AUTHORIZERS: []PubKeyHash = []PubKeyHash{PubKeyHash::new(#)}
-const MARKETPLACE_ADDRESS: Address = Address::from_hex("0x")
+const MARKETPLACE_ADDRESS: Address = Address::from_hex(
+    "000e1bdf3e12a8d4e915f40c721e30bfab50675f0b44b38e7bb7f677859717909c5741d9a8524cde5ef03c4dd491fe795d1fdf11fd67d68a5e"
+)
 
 // ---------- Functions ----------
 
@@ -204,7 +206,7 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       
                 // Make sure that the marketplace output
                 // is correct.
-                check_marketplace_payout(marketplace_output,marketplace_fee, datum_tag)
+                check_marketplace_payout(marketplace_output, marketplace_fee, datum_tag)
             }
         },
         WithdrawOrUpdate => {
