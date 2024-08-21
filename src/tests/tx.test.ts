@@ -32,8 +32,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
         { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
       ];
-      fixture.datumTag = buildDatumTag(
-        new helios.TxOutputId(getNewFakeUtxoId())
+      fixture.spendingUtxoId = getNewFakeUtxoId();
+      fixture.datumTag = await buildDatumTag(
+        new helios.TxOutputId(fixture.spendingUtxoId)
       );
       fixture.payoutOutputs = [
         {
@@ -50,5 +51,5 @@ const runTests = async (file: string) => {
 };
 
 (async () => {
-  await runTests("../contract/marketplace.helios");
+  await runTests("src/contract/marketplace.helios");
 })();

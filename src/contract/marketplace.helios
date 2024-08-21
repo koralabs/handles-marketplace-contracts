@@ -37,9 +37,12 @@ enum Redeemer {
 }
 
 // ---------- Parameters ----------
-const AUTHORIZERS: []PubKeyHash = []PubKeyHash{PubKeyHash::new(#)}
-const MARKETPLACE_ADDRESS: Address = Address::from_hex(
-    "000e1bdf3e12a8d4e915f40c721e30bfab50675f0b44b38e7bb7f677859717909c5741d9a8524cde5ef03c4dd491fe795d1fdf11fd67d68a5e"
+const AUTHORIZERS: []PubKeyHash = []PubKeyHash{
+    PubKeyHash::new(#01234567890123456789012345678901234567890123456789000001)
+}
+const MARKETPLACE_ADDRESS: Address = Address::new(
+    Credential::new_pubkey(PubKeyHash::new(#01234567890123456789012345678901234567890123456789222222)),
+    Option[StakingCredential]::None
 )
 
 // ---------- Functions ----------
@@ -57,7 +60,7 @@ func check_payouts_aux(outputs: []TxOutput, payouts: []Payout) -> Int {
     first_output: TxOutput = outputs.head;
     rest_outputs: []TxOutput = outputs.tail;
 
-    assert(first_output.datum == OutputDatum::None, "Rest outputs' datum must be None");
+    assert(first_output.datum == OutputDatum::new_none(), "Rest outputs' datum must be None");
 
     payout: Payout = payouts.head;
     rest_payouts: []Payout = payouts.tail;
@@ -150,14 +153,14 @@ func check_payouts(outputs: []TxOutput, payouts: []Payout, datum_tag: OutputDatu
 /// to compare to.
 func check_marketplace_payout(output: TxOutput, marketplace_fee: Int, datum_tag: OutputDatum) -> Bool {
     assert(output.datum == datum_tag, "Marketplace fee output's datum must be match datum tag");
-  
+
     // Match constant marketplace address
     assert(output.address == MARKETPLACE_ADDRESS, "Marketplace address must be correct");
   
     // Output value quantity must equal the marketplace fee
     // this prevents people from not paying a fee by submitting
     // transactions not constructed by Jpg.
-    expected_output_value = Value::new(AssetClass::ADA, marketplace_fee);
+    expected_output_value: Value = Value::new(AssetClass::ADA, marketplace_fee);
     assert(output.value.contains(expected_output_value), "Marketplace fee must be paid");
 
     // prevent token spamming
@@ -198,12 +201,12 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
                 marketplace_output: TxOutput = payout_outputs.head;
                 rest_outputs: []TxOutput = payout_outputs.tail;
       
-                payouts_sum: Int = check_payouts(rest_outputs, payouts, OutputDatum::None);
+                payouts_sum: Int = check_payouts(rest_outputs, payouts, OutputDatum::new_none());
       
                 // This approximates the marketplace fee given only the payouts to a very high degree.
                 // For a payouts in excess of 100k ada the error is less than 40000 lovelace.
                 marketplace_fee: Int = payouts_sum * 50 / 49 / 50;
-      
+
                 // Make sure that the marketplace output
                 // is correct.
                 check_marketplace_payout(marketplace_output, marketplace_fee, datum_tag)

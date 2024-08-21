@@ -5,7 +5,7 @@ const HANDLE_POLICY_ID =
 const AUTHORIZERS_PUB_KEY_HAHSES = [
   helios.PubKeyHash.fromHex(
     "01234567890123456789012345678901234567890123456789000001"
-  ),
+  ), /// vailid
   helios.PubKeyHash.fromHex(
     "01234567890123456789012345678901234567890123456789000002"
   ),
@@ -51,7 +51,7 @@ const PAYOUT_ADDRESSES = [
   ),
 ];
 
-const minLovelace = 2_000_000n;
+const minLovelace = 10_000_000n;
 
 export {
   HANDLE_POLICY_ID,
