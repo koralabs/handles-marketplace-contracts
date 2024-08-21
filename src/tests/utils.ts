@@ -7,9 +7,7 @@ import Decimal from "decimal.js";
 const adaToLovelace = (ada: number): number =>
   new Decimal(ada).mul(Math.pow(10, 6)).floor().toNumber();
 
-const buildDatumTag = async (
-  outputRef: helios.TxOutputId
-): Promise<helios.Datum> => {
+const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
   const cbor = outputRef._toUplcData().toCborHex();
   const hashed = helios.Crypto.blake2b(helios.hexToBytes(cbor));
   return helios.Datum.inline(
