@@ -19,7 +19,7 @@ import fs from "fs/promises";
 const runTests = async (file: string) => {
   const walletAddress = await getAddressAtDerivation(0);
   const tester = new ContractTester(walletAddress, false);
-  await tester.init("Update");
+  await tester.init();
 
   const contractFile = (await fs.readFile(file)).toString();
   const program = helios.Program.new(contractFile); //new instance
