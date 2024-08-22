@@ -1,4 +1,9 @@
-import { HANDLE_POLICY_ID, minLovelace, OWNER_PUB_KEY_HASH } from "./constants";
+import {
+  HANDLE_POLICY_ID,
+  minLovelace,
+  OWNER_PUB_KEY_HASH,
+  SPAM_TOKEN_POLICY_ID,
+} from "./constants";
 import { Payout } from "./types";
 import { buildDatum } from "./utils";
 
@@ -17,9 +22,8 @@ helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 class BuyFixture extends Fixture {
   handleName = "golddydev";
 
-  buyRedeemer = {
-    constructor_0: [0],
-  };
+  payoutOutputsOffset = 0;
+  buyRedeemer = { constructor_0: [0] };
   buyRedeemerCbor: string = "";
 
   spendingUtxoId: string = "";
@@ -34,6 +38,9 @@ class BuyFixture extends Fixture {
   }
 
   async initialize() {
+    this.buyRedeemer = {
+      constructor_0: [this.payoutOutputsOffset],
+    };
     this.buyRedeemerCbor = await convertJsontoCbor(this.buyRedeemer);
     this.redeemer = helios.UplcData.fromCbor(this.buyRedeemerCbor);
     const datum = await buildDatum(this.payouts, this.owner);
@@ -43,6 +50,18 @@ class BuyFixture extends Fixture {
         new helios.TxOutput(
           await getAddressAtDerivation(0),
           new helios.Value(BigInt(500_000_000))
+        )
+      ),
+      new helios.TxInput( // spam money
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(
+          await getAddressAtDerivation(0),
+          new helios.Value(BigInt(100_000_000), [
+            [
+              SPAM_TOKEN_POLICY_ID,
+              [[Buffer.from("Spam").toString("hex"), 100_000_000]],
+            ],
+          ])
         )
       ),
       new helios.TxInput( /// Handle NFT to Buy
@@ -72,7 +91,7 @@ class BuyFixture extends Fixture {
         new helios.TxOutput( /// marketplace address
           payout.address,
           new helios.Value(payout.amountLovelace),
-          index == 0 ? this.datumTag : undefined
+          index == this.payoutOutputsOffset ? this.datumTag : undefined
         )
     );
 
@@ -82,4 +101,64 @@ class BuyFixture extends Fixture {
   }
 }
 
-export { BuyFixture };
+class WithdrawOrUpdateFixture extends Fixture {
+  handleName = "golddydev";
+
+  withdrawOrUpdateRedeemer = { constructor_1: [] };
+  withdrawOrUpdateRedeemerCbor: string = "";
+
+  payouts: Payout[] = [];
+  newPayouts: Payout[] | undefined = undefined;
+  owner: helios.PubKeyHash = OWNER_PUB_KEY_HASH;
+
+  nftOutputAddress: helios.Address = helios.Address.fromHash(this.owner);
+
+  constructor(validatorHash: helios.ValidatorHash) {
+    super(validatorHash);
+  }
+
+  async initialize() {
+    this.withdrawOrUpdateRedeemerCbor = await convertJsontoCbor(
+      this.withdrawOrUpdateRedeemer
+    );
+    this.redeemer = helios.UplcData.fromCbor(this.withdrawOrUpdateRedeemerCbor);
+    const datum = await buildDatum(this.payouts, this.owner);
+
+    const nftValue = new helios.Value(minLovelace, [
+      [
+        HANDLE_POLICY_ID,
+        [
+          [
+            `${AssetNameLabel.LBL_222}${Buffer.from(this.handleName).toString(
+              "hex"
+            )}`,
+            1,
+          ],
+        ],
+      ],
+    ]);
+    this.inputs = [
+      new helios.TxInput( // money & collateral
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(
+          await getAddressAtDerivation(0),
+          new helios.Value(BigInt(500_000_000))
+        )
+      ),
+      new helios.TxInput( /// Handle NFT to withdraw or update
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(this.scriptAddress, nftValue, datum)
+      ),
+    ];
+
+    const newDatum = this.newPayouts
+      ? await buildDatum(this.newPayouts, this.owner)
+      : null;
+    this.outputs = [
+      new helios.TxOutput(this.nftOutputAddress, nftValue, newDatum),
+    ];
+    return this;
+  }
+}
+
+export { BuyFixture, WithdrawOrUpdateFixture };
