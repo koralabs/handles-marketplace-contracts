@@ -1,11 +1,12 @@
+import { buildDatum } from "../datum";
+import { Payout } from "../types";
+
 import {
   HANDLE_POLICY_ID,
   minLovelace,
-  OWNER_PUB_KEY_HASH,
+  ONWER_ADDRESS,
   SPAM_TOKEN_POLICY_ID,
 } from "./constants";
-import { Payout } from "./types";
-import { buildDatum } from "./utils";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
@@ -28,7 +29,7 @@ class BuyFixture extends Fixture {
 
   spendingUtxoId: string = "";
   payouts: Payout[] = [];
-  owner: helios.PubKeyHash = OWNER_PUB_KEY_HASH;
+  owner: helios.Address = ONWER_ADDRESS;
   authorizers: helios.PubKeyHash[] = [];
   datumTag: helios.Datum | null = null;
   payoutOutputs: Payout[] = [];
@@ -109,7 +110,7 @@ class WithdrawOrUpdateFixture extends Fixture {
 
   payouts: Payout[] = [];
   newPayouts: Payout[] | undefined = undefined;
-  owner: helios.PubKeyHash = OWNER_PUB_KEY_HASH;
+  owner: helios.Address = ONWER_ADDRESS;
 
   nftOutputAddress: helios.Address = helios.Address.fromHash(this.owner);
 

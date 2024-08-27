@@ -1,11 +1,8 @@
+import { invariant } from "./helpers";
 import { Payout } from "./types";
 
 import * as helios from "@koralabs/helios";
 import { convertJsontoCbor } from "@koralabs/kora-labs-contract-testing";
-import Decimal from "decimal.js";
-
-const adaToLovelace = (ada: number): number =>
-  new Decimal(ada).mul(Math.pow(10, 6)).floor().toNumber();
 
 const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
   const cbor = outputRef._toUplcData().toCborHex();
@@ -17,8 +14,9 @@ const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
 
 const buildDatum = async (
   payouts: Payout[],
-  owner: helios.PubKeyHash
+  owner: helios.Address
 ): Promise<helios.Datum> => {
+  invariant(!!owner.pubKeyHash, "Not valid owner");
   const constrPayout = (payout: Payout) => [
     {
       constructor_0: [
@@ -38,4 +36,4 @@ const buildDatum = async (
   return helios.Datum.inline(helios.UplcData.fromCbor(datumCbor));
 };
 
-export { adaToLovelace, buildDatumTag, buildDatum };
+export { buildDatum, buildDatumTag };
