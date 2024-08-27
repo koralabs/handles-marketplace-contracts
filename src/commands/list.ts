@@ -37,7 +37,17 @@ const buyCommand = program
             amountLovelace: adaToLovelace(Number(priceString) * 0.1),
           },
         ],
-        address
+        address,
+        {
+          authorizers: [
+            helios.PubKeyHash.fromHex(
+              "633a0061fcdb8aca5b86ef3a177fdcb0c178ccca3066b0be7197f3a1"
+            ),
+          ],
+          marketplaceAddress: helios.Address.fromBech32(
+            "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw"
+          ),
+        }
       );
 
       if (!txResult.ok) return program.error(txResult.error);

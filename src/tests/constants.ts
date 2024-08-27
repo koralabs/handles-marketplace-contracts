@@ -6,7 +6,7 @@ const SPAM_TOKEN_POLICY_ID =
   "01234567890123456789012345678901234567890123456789999999";
 const AUTHORIZERS_PUB_KEY_HAHSES = [
   helios.PubKeyHash.fromHex(
-    "01234567890123456789012345678901234567890123456789000001"
+    "633a0061fcdb8aca5b86ef3a177fdcb0c178ccca3066b0be7197f3a1"
   ), /// valid
   helios.PubKeyHash.fromHex(
     "01234567890123456789012345678901234567890123456789000002"
@@ -21,10 +21,8 @@ const ONWER_ADDRESS = helios.Address.fromHash(
   )
 );
 
-const MARKETPLACE_ADDRESS = helios.Address.fromHash(
-  helios.PubKeyHash.fromHex(
-    "01234567890123456789012345678901234567890123456789222222"
-  )
+const MARKETPLACE_ADDRESS = helios.Address.fromBech32(
+  "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw"
 );
 
 const PAYOUT_ADDRESSES = [

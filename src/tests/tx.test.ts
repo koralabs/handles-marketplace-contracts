@@ -25,6 +25,8 @@ const runTests = async (file: string) => {
 
   const contractFile = (await fs.readFile(file)).toString();
   const program = helios.Program.new(contractFile); //new instance
+  program.parameters.AUTHORIZERS = [AUTHORIZERS_PUB_KEY_HAHSES[0]];
+  program.parameters.MARKETPLACE_ADDRESS = MARKETPLACE_ADDRESS;
 
   /// --------------- BUY ---------------
 

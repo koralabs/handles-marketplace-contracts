@@ -18,7 +18,7 @@ import {
 } from "@koralabs/kora-labs-contract-testing";
 
 /// setup
-helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
+helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
 
 class BuyFixture extends Fixture {
   handleName = "golddydev";
@@ -112,7 +112,9 @@ class WithdrawOrUpdateFixture extends Fixture {
   newPayouts: Payout[] | undefined = undefined;
   owner: helios.Address = ONWER_ADDRESS;
 
-  nftOutputAddress: helios.Address = helios.Address.fromHash(this.owner);
+  nftOutputAddress: helios.Address = helios.Address.fromBech32(
+    this.owner.toBech32()
+  );
 
   constructor(validatorHash: helios.ValidatorHash) {
     super(validatorHash);

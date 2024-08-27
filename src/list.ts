@@ -1,6 +1,6 @@
 import { buildDatum } from "./datum";
 import { getNetwork, mayFailAsync } from "./helpers";
-import { Payout } from "./types";
+import { Parameters, Payout } from "./types";
 import { getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
@@ -14,7 +14,8 @@ const list = async (
   handlePolicyId: string,
   handleName: string,
   payouts: Payout[],
-  owner: helios.Address
+  owner: helios.Address,
+  parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
   const network = getNetwork(blockfrostApiKey);
   helios.config.set({
@@ -37,7 +38,7 @@ const list = async (
   const utxos = utxosResult.data;
 
   const uplcProgramResult = await mayFailAsync(() =>
-    getUplcProgram()
+    getUplcProgram(parameters)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);

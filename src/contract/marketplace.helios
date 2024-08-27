@@ -38,11 +38,13 @@ enum Redeemer {
 
 // ---------- Parameters ----------
 const AUTHORIZERS: []PubKeyHash = []PubKeyHash{
-    PubKeyHash::new(#01234567890123456789012345678901234567890123456789000001)
+    PubKeyHash::new(#)
 }
 const MARKETPLACE_ADDRESS: Address = Address::new(
-    Credential::new_pubkey(PubKeyHash::new(#01234567890123456789012345678901234567890123456789222222)),
-    Option[StakingCredential]::None
+    Credential::new_pubkey(PubKeyHash::new(#)),
+    Option[StakingCredential]::Some{
+        StakingCredential::new_hash(StakingHash::new_stakekey(PubKeyHash::new(#)))
+    }
 )
 
 // ---------- Functions ----------
