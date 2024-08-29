@@ -1,5 +1,5 @@
 import { buildDatum } from "./datum";
-import { getNetwork, mayFailAsync } from "./helpers";
+import { getNetwork, mayFail, mayFailAsync } from "./helpers";
 import { Parameters, Payout } from "./types";
 import { getUplcProgram } from "./utils";
 
@@ -7,7 +7,6 @@ import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
-/// payouts
 const list = async (
   blockfrostApiKey: string,
   address: helios.Address,
@@ -58,16 +57,22 @@ const list = async (
 
   const minFee = 5_000_000n;
   const minValue = new helios.Value(minFee, handleAsset);
-  const [selected] = helios.CoinSelection.selectLargestFirst(utxos, minValue);
+  const selectResult = mayFail(() =>
+    helios.CoinSelection.selectLargestFirst(utxos, minValue)
+  );
+  if (!selectResult.ok) return Err(selectResult.error);
+  const [selected] = selectResult.data;
 
   const tx = new helios.Tx();
   tx.addInputs(selected);
 
-  const datum = await buildDatum(payouts, owner);
+  const datum = await mayFailAsync(() => buildDatum(payouts, owner)).complete();
+  if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
+
   const output = new helios.TxOutput(
     helios.Address.fromHash(uplcProgram.validatorHash, true),
     new helios.Value(0n, handleAsset),
-    datum
+    datum.data
   );
   output.correctLovelace(paramter);
   tx.addOutput(output);

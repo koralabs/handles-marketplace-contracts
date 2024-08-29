@@ -9,7 +9,7 @@ spending marketplace
 // one of the outputs.
 
 struct Payout {
-    address: Address
+    address: ByteArray
     amount_lovelace: Int
 }
 
@@ -19,7 +19,7 @@ struct Datum {
     payouts: []Payout
     /// Flexible to allow discounts
     /// The key that listed the NFT
-    owner: PubKeyHash
+    owner: ByteArray
 }
 
 // ---------- Redeemer ----------
@@ -40,12 +40,7 @@ enum Redeemer {
 const AUTHORIZERS: []PubKeyHash = []PubKeyHash{
     PubKeyHash::new(#)
 }
-const MARKETPLACE_ADDRESS: Address = Address::new(
-    Credential::new_pubkey(PubKeyHash::new(#)),
-    Option[StakingCredential]::Some{
-        StakingCredential::new_hash(StakingHash::new_stakekey(PubKeyHash::new(#)))
-    }
-)
+const MARKETPLACE_ADDRESS: Address = Address::from_bytes(#)
 
 // ---------- Functions ----------
 
@@ -72,7 +67,7 @@ func check_payouts_aux(outputs: []TxOutput, payouts: []Payout) -> Int {
     // The `Output` address must match
     // the address specified in the corresponding
     // payout from the datum.
-    assert(payout_address == first_output.address, "Output address must be matched with payout");
+    assert(Address::from_bytes(payout_address) == first_output.address, "Output address must be matched with payout");
     // Amount of lovelace in payout datum
     // must be greather than 0
     assert(amount_lovelace > 0, "Payout amount must be greatner than 0");
@@ -118,7 +113,7 @@ func check_payouts(outputs: []TxOutput, payouts: []Payout, datum_tag: OutputDatu
     // The `Output` address must match
     // the address specified in the corresponding
     // payout from the datum.
-    assert(payout_address == first_output.address, "First output address must be matched with payout");
+    assert(Address::from_bytes(payout_address) == first_output.address, "First output address must be matched with payout");
 
     // Amount of lovelace in payout datum
     // must be greather than 0
@@ -219,7 +214,7 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
             // owner can cancel or update their listing
             // at any time.
             // is signed by owner
-            tx.is_signed_by(datum.owner)
+            tx.is_signed_by(PubKeyHash::new(datum.owner))
         }
     }
 }

@@ -1,49 +1,41 @@
+import { buy } from "../buy";
 import program from "../cli";
 import { loadConfig } from "../config";
-import { list } from "../list";
-import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
 
 const buyCommand = program
-  .command("list")
-  .description("List Handle NFT on Marketplace")
-  .argument("<address>", "Address to perform listing")
+  .command("buy")
+  .description("Buy Handle NFT on Marketplace")
+  .argument("<address>", "Address to perform buying")
   .argument("<handle-name>", "Ada Handle Name to list on marketplace")
-  .argument("<price>", "Price in ada")
-  .argument("<creator-address>", "Address who create this NFT")
+  .argument("<utxo-tx-hash>", "Transaction Hash of UTxO where handle is")
+  .argument("<utxo-tx-index>", "Transaction Index of UTxO where handle is")
   .action(
     async (
       bech32Address: string,
       handleName: string,
-      priceString: string,
-      creatorBech32Address: string
+      txHash: string,
+      txIndex: string
     ) => {
       const configResult = loadConfig();
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
       const address = helios.Address.fromBech32(bech32Address);
-      const creatorAddress = helios.Address.fromBech32(creatorBech32Address);
-      const txResult = await list(
+      const txResult = await buy(
         config.blockfrostApiKey,
         address,
         config.handlePolicyId,
         handleName,
-        [
-          { address, amountLovelace: adaToLovelace(Number(priceString) * 0.9) },
-          {
-            address: creatorAddress,
-            amountLovelace: adaToLovelace(Number(priceString) * 0.1),
-          },
-        ],
-        address,
+        txHash,
+        parseInt(txIndex),
         config.paramters
       );
 
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
-      console.log(txResult.data.toCborHex());
+      // console.log(txResult.data.toCborHex());
     }
   );
 

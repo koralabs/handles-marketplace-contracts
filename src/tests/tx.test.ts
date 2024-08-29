@@ -23,6 +23,9 @@ const runTests = async (file: string) => {
   const tester = new ContractTester(walletAddress, false);
   await tester.init();
 
+  /// setup
+  helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
+
   const contractFile = (await fs.readFile(file)).toString();
   const program = helios.Program.new(contractFile); //new instance
   program.parameters.AUTHORIZERS = [AUTHORIZERS_PUB_KEY_HAHSES[0]];

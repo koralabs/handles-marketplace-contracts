@@ -5,9 +5,14 @@ interface Payout {
   amountLovelace: number;
 }
 
+interface Datum {
+  payouts: Payout[];
+  owner: helios.Address;
+}
+
 interface Parameters {
   authorizers: helios.PubKeyHash[];
   marketplaceAddress: helios.Address;
 }
 
-export { Parameters, Payout };
+export { Datum, Parameters, Payout };

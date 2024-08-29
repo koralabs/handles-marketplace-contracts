@@ -1,7 +1,8 @@
 import { invariant } from "./helpers";
-import { Payout } from "./types";
+import { Datum, Payout } from "./types";
 
 import * as helios from "@koralabs/helios";
+import { decodeCborToJson } from "@koralabs/kora-labs-common";
 import { convertJsontoCbor } from "@koralabs/kora-labs-contract-testing";
 
 const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
@@ -18,16 +19,7 @@ const buildDatum = async (
 ): Promise<helios.Datum> => {
   invariant(!!owner.pubKeyHash, "Not valid owner");
   const constrPayout = (payout: Payout) => [
-    {
-      constructor_0: [
-        { constructor_0: [`0x${payout.address.pubKeyHash?.hex || ""}`] },
-        {
-          constructor_1: payout.address.stakingHash
-            ? [`0x${payout.address.pubKeyHash?.hex || ""}`]
-            : [],
-        },
-      ],
-    },
+    `0x${payout.address.hex}`,
     payout.amountLovelace,
   ];
 
@@ -36,4 +28,27 @@ const buildDatum = async (
   return helios.Datum.inline(helios.UplcData.fromCbor(datumCbor));
 };
 
-export { buildDatum, buildDatumTag };
+const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
+  const decoded = await decodeCborToJson({
+    cborString: datum.dump().inlineCbor,
+    forJson: false,
+  });
+  console.log({ decoded });
+  const owner = helios.Address.fromHex(decoded[1].slice(2));
+  const payouts: Payout[] = await Promise.all(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    decoded[0].map(async (rawPayout: any) => {
+      const addressCbor = await convertJsontoCbor(rawPayout[0]);
+      const address = helios.Address.fromUplcData(
+        helios.UplcData.fromCbor(addressCbor)
+      );
+      return { address, amountLovelace: rawPayout[1] } as Payout;
+    })
+  );
+  return {
+    payouts,
+    owner,
+  };
+};
+
+export { buildDatum, buildDatumTag, decodeDatum };

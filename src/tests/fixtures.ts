@@ -17,9 +17,6 @@ import {
   getNewFakeUtxoId,
 } from "@koralabs/kora-labs-contract-testing";
 
-/// setup
-helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
-
 class BuyFixture extends Fixture {
   handleName = "golddydev";
 

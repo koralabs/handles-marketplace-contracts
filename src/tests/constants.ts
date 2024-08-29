@@ -26,29 +26,44 @@ const MARKETPLACE_ADDRESS = helios.Address.fromBech32(
 );
 
 const PAYOUT_ADDRESSES = [
-  helios.Address.fromHash(
+  helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555551"
+    ),
+    helios.PubKeyHash.fromHex(
+      "01234567890123456789012345678901234567890123456789666661"
     )
   ),
-  helios.Address.fromHash(
+  helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555552"
+    ),
+    helios.PubKeyHash.fromHex(
+      "01234567890123456789012345678901234567890123456789666662"
     )
   ),
-  helios.Address.fromHash(
+  helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555553"
+    ),
+    helios.PubKeyHash.fromHex(
+      "01234567890123456789012345678901234567890123456789666663"
     )
   ),
-  helios.Address.fromHash(
+  helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555554"
+    ),
+    helios.PubKeyHash.fromHex(
+      "01234567890123456789012345678901234567890123456789666664"
     )
   ),
-  helios.Address.fromHash(
+  helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555555"
+    ),
+    helios.PubKeyHash.fromHex(
+      "01234567890123456789012345678901234567890123456789666665"
     )
   ),
 ];
