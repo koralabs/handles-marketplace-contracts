@@ -1,10 +1,11 @@
-import { buildDatum, decodeDatum } from "./datum";
-import { getNetwork, mayFailAsync } from "./helpers";
-import { Parameters, Payout } from "./types";
+import { buildDatumTag, decodeDatum } from "./datum";
+import { getNetwork, mayFail, mayFailAsync } from "./helpers";
+import { Parameters } from "./types";
 import { getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
+import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
 const buy = async (
@@ -15,20 +16,21 @@ const buy = async (
   txHash: string,
   txIndex: number,
   parameters: Parameters
-): Promise<Result<void, string>> => {
+): Promise<Result<helios.Tx, string>> => {
   const network = getNetwork(blockfrostApiKey);
+  const isTestnet = network != "mainnet";
   helios.config.set({
-    IS_TESTNET: network != "mainnet",
+    IS_TESTNET: isTestnet,
     AUTO_SET_VALIDITY_RANGE: true,
   });
 
   const api = new helios.BlockfrostV0(network, blockfrostApiKey);
-  const paramterResult = await mayFailAsync(() =>
+  const parameterResult = await mayFailAsync(() =>
     api.getParameters()
   ).complete();
-  if (!paramterResult.ok)
-    return Err(`Getting Network Parameter ${paramterResult.error}`);
-  const paramter = paramterResult.data;
+  if (!parameterResult.ok)
+    return Err(`Getting Network Parameter ${parameterResult.error}`);
+  const parameter = parameterResult.data;
 
   const handleUtxoResult = await mayFailAsync(() =>
     api.getUtxo(new helios.TxOutputId(`${txHash}#${txIndex}`))
@@ -59,42 +61,84 @@ const buy = async (
     return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
   const datum = datumResult.data;
 
-  //   const handleAsset = new helios.Assets([
-  //     [
-  //       handlePolicyId,
-  //       [
-  //         [
-  //           `${AssetNameLabel.LBL_222}${Buffer.from(handleName).toString("hex")}`,
-  //           1,
-  //         ],
-  //       ],
-  //     ],
-  //   ]);
+  /// build tx
 
-  //   const minFee = 5_000_000n;
-  //   const minValue = new helios.Value(minFee, handleAsset);
-  //   const [selected] = helios.CoinSelection.selectLargestFirst(utxos, minValue);
+  const tx = new helios.Tx();
 
-  //   const tx = new helios.Tx();
-  //   tx.addInputs(selected);
+  /// take fund to pay payouts
+  const minFee = 5_000_000n;
+  const totalPayoutsLovelace = datum.payouts.reduce(
+    (acc, cur) => acc + cur.amountLovelace,
+    0n
+  );
+  const marketplaceFee = (totalPayoutsLovelace * 50n) / 49n / 50n;
+  const requiredValue = new helios.Value(
+    minFee + totalPayoutsLovelace + marketplaceFee
+  );
+  const [selected] = helios.CoinSelection.selectLargestFirst(
+    utxos,
+    requiredValue
+  );
+  tx.addInputs(selected);
 
-  //   const datum = await buildDatum(payouts, owner);
-  //   const output = new helios.TxOutput(
-  //     helios.Address.fromHash(uplcProgram.validatorHash, true),
-  //     new helios.Value(0n, handleAsset),
-  //     datum
-  //   );
-  //   output.correctLovelace(paramter);
-  //   tx.addOutput(output);
+  /// redeemer
+  const redeemer = mayFail(() => Buy(0));
+  if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
-  //   const txCompleteResult = await mayFailAsync(() =>
-  //     tx.finalize(paramter, address)
-  //   ).complete();
-  //   if (!txCompleteResult.ok)
-  //     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
+  /// collect handle NFT to buy
+  tx.addInput(handleUtxo, redeemer.data);
+  tx.attachScript(uplcProgram);
 
-  //   return Ok(txCompleteResult.data);
-  return Ok();
+  /// build datum tag
+  const datumTag = mayFail(() => buildDatumTag(handleUtxo.outputId));
+  if (!datumTag.ok) return Err(`Building Datum Tag error: ${datumTag.error}`);
+
+  /// add marketplace fee
+  const marketplaceFeeOutput = new helios.TxOutput(
+    parameters.marketplaceAddress,
+    new helios.Value(marketplaceFee),
+    datumTag.data
+  );
+  marketplaceFeeOutput.correctLovelace(parameter);
+  tx.addOutput(marketplaceFeeOutput);
+
+  /// add payout outputs
+  const payoutOutputs = datum.payouts.map(
+    (payout) =>
+      new helios.TxOutput(
+        payout.address,
+        new helios.Value(payout.amountLovelace)
+      )
+  );
+  payoutOutputs.forEach((output) => output.correctLovelace(parameter));
+  tx.addOutputs(payoutOutputs);
+
+  /// add handle buy output
+  const handleAsset = new helios.Assets([
+    [
+      handlePolicyId,
+      [
+        [
+          `${AssetNameLabel.LBL_222}${Buffer.from(handleName).toString("hex")}`,
+          1,
+        ],
+      ],
+    ],
+  ]);
+  const handleBuyOutput = new helios.TxOutput(
+    address,
+    new helios.Value(0, handleAsset)
+  );
+  handleBuyOutput.correctLovelace(parameter);
+  tx.addOutput(handleBuyOutput);
+
+  const txCompleteResult = await mayFailAsync(() =>
+    tx.finalize(parameter, address)
+  ).complete();
+  if (!txCompleteResult.ok)
+    return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
+
+  return Ok(txCompleteResult.data);
 };
 
 export { buy };

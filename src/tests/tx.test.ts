@@ -21,10 +21,10 @@ import fs from "fs/promises";
 const runTests = async (file: string) => {
   const walletAddress = await getAddressAtDerivation(0);
   const tester = new ContractTester(walletAddress, false);
-  await tester.init();
+  await tester.init("Buy", "can buy nft without authorizer");
 
   /// setup
-  helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
+  helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
 
   const contractFile = (await fs.readFile(file)).toString();
   const program = helios.Program.new(contractFile); //new instance

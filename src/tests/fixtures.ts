@@ -41,7 +41,7 @@ class BuyFixture extends Fixture {
     };
     this.buyRedeemerCbor = await convertJsontoCbor(this.buyRedeemer);
     this.redeemer = helios.UplcData.fromCbor(this.buyRedeemerCbor);
-    const datum = await buildDatum(this.payouts, this.owner);
+    const datum = buildDatum(this.payouts, this.owner);
     this.inputs = [
       new helios.TxInput( // money & collateral
         new helios.TxOutputId(getNewFakeUtxoId()),
@@ -122,7 +122,7 @@ class WithdrawOrUpdateFixture extends Fixture {
       this.withdrawOrUpdateRedeemer
     );
     this.redeemer = helios.UplcData.fromCbor(this.withdrawOrUpdateRedeemerCbor);
-    const datum = await buildDatum(this.payouts, this.owner);
+    const datum = buildDatum(this.payouts, this.owner);
 
     const nftValue = new helios.Value(minLovelace, [
       [
@@ -152,7 +152,7 @@ class WithdrawOrUpdateFixture extends Fixture {
     ];
 
     const newDatum = this.newPayouts
-      ? await buildDatum(this.newPayouts, this.owner)
+      ? buildDatum(this.newPayouts, this.owner)
       : null;
     this.outputs = [
       new helios.TxOutput(this.nftOutputAddress, nftValue, newDatum),

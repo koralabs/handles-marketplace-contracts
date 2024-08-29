@@ -17,8 +17,9 @@ const list = async (
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
   const network = getNetwork(blockfrostApiKey);
+  const isTestnet = network != "mainnet";
   helios.config.set({
-    IS_TESTNET: network != "mainnet",
+    IS_TESTNET: isTestnet,
     AUTO_SET_VALIDITY_RANGE: true,
   });
 
@@ -66,11 +67,11 @@ const list = async (
   const tx = new helios.Tx();
   tx.addInputs(selected);
 
-  const datum = await mayFailAsync(() => buildDatum(payouts, owner)).complete();
+  const datum = mayFail(() => buildDatum(payouts, owner));
   if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
 
   const output = new helios.TxOutput(
-    helios.Address.fromHash(uplcProgram.validatorHash, true),
+    helios.Address.fromHash(uplcProgram.validatorHash),
     new helios.Value(0n, handleAsset),
     datum.data
   );

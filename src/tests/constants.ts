@@ -1,5 +1,8 @@
 import * as helios from "@koralabs/helios";
 
+/// setup
+helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
+
 const HANDLE_POLICY_ID =
   "f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a";
 const SPAM_TOKEN_POLICY_ID =

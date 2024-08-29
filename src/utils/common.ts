@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-const adaToLovelace = (ada: number): number =>
-  new Decimal(ada).mul(Math.pow(10, 6)).floor().toNumber();
+const adaToLovelace = (ada: number): bigint =>
+  BigInt(new Decimal(ada).mul(Math.pow(10, 6)).floor().toString());
 
 export { adaToLovelace };

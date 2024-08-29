@@ -35,7 +35,7 @@ const buyCommand = program
 
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
-      // console.log(txResult.data.toCborHex());
+      console.log(txResult.data.toCborHex());
     }
   );
 
