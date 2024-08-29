@@ -1,4 +1,5 @@
 import { buildDatum } from "../datum";
+import { Buy, WithdrawOrUpdate } from "../redeemer";
 import { Payout } from "../types";
 
 import {
@@ -11,7 +12,6 @@ import {
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import {
-  convertJsontoCbor,
   Fixture,
   getAddressAtDerivation,
   getNewFakeUtxoId,
@@ -21,8 +21,6 @@ class BuyFixture extends Fixture {
   handleName = "golddydev";
 
   payoutOutputsOffset = 0;
-  buyRedeemer = { constructor_0: [0] };
-  buyRedeemerCbor: string = "";
 
   spendingUtxoId: string = "";
   payouts: Payout[] = [];
@@ -36,11 +34,7 @@ class BuyFixture extends Fixture {
   }
 
   async initialize() {
-    this.buyRedeemer = {
-      constructor_0: [this.payoutOutputsOffset],
-    };
-    this.buyRedeemerCbor = await convertJsontoCbor(this.buyRedeemer);
-    this.redeemer = helios.UplcData.fromCbor(this.buyRedeemerCbor);
+    this.redeemer = Buy(this.payoutOutputsOffset);
     const datum = buildDatum(this.payouts, this.owner);
     this.inputs = [
       new helios.TxInput( // money & collateral
@@ -102,9 +96,6 @@ class BuyFixture extends Fixture {
 class WithdrawOrUpdateFixture extends Fixture {
   handleName = "golddydev";
 
-  withdrawOrUpdateRedeemer = { constructor_1: [] };
-  withdrawOrUpdateRedeemerCbor: string = "";
-
   payouts: Payout[] = [];
   newPayouts: Payout[] | undefined = undefined;
   owner: helios.Address = ONWER_ADDRESS;
@@ -118,10 +109,7 @@ class WithdrawOrUpdateFixture extends Fixture {
   }
 
   async initialize() {
-    this.withdrawOrUpdateRedeemerCbor = await convertJsontoCbor(
-      this.withdrawOrUpdateRedeemer
-    );
-    this.redeemer = helios.UplcData.fromCbor(this.withdrawOrUpdateRedeemerCbor);
+    this.redeemer = WithdrawOrUpdate();
     const datum = buildDatum(this.payouts, this.owner);
 
     const nftValue = new helios.Value(minLovelace, [

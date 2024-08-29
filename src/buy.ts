@@ -62,7 +62,6 @@ const buy = async (
   const datum = datumResult.data;
 
   /// build tx
-
   const tx = new helios.Tx();
 
   /// take fund to pay payouts
