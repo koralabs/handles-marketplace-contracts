@@ -1,7 +1,7 @@
 import { buildDatumTag, decodeDatum } from "./datum";
 import { getNetwork, mayFail, mayFailAsync } from "./helpers";
 import { Parameters } from "./types";
-import { getUplcProgram } from "./utils";
+import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
@@ -25,12 +25,6 @@ const buy = async (
   });
 
   const api = new helios.BlockfrostV0(network, blockfrostApiKey);
-  const parameterResult = await mayFailAsync(() =>
-    api.getParameters()
-  ).complete();
-  if (!parameterResult.ok)
-    return Err(`Getting Network Parameter ${parameterResult.error}`);
-  const parameter = parameterResult.data;
 
   const handleUtxoResult = await mayFailAsync(() =>
     api.getUtxo(new helios.TxOutputId(`${txHash}#${txIndex}`))
@@ -60,6 +54,16 @@ const buy = async (
   if (!datumResult.ok)
     return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
   const datum = datumResult.data;
+
+  /// fetch protocol parameter
+  const networkParamsResult = await mayFailAsync(() =>
+    fetchNetworkParameters(network)
+  ).complete();
+  if (!networkParamsResult.ok)
+    return Err(
+      `Fetching Network Parameter error: ${networkParamsResult.error}`
+    );
+  const networkParams = networkParamsResult.data;
 
   /// build tx
   const tx = new helios.Tx();
@@ -98,7 +102,7 @@ const buy = async (
     new helios.Value(marketplaceFee),
     datumTag.data
   );
-  marketplaceFeeOutput.correctLovelace(parameter);
+  marketplaceFeeOutput.correctLovelace(networkParams);
   tx.addOutput(marketplaceFeeOutput);
 
   /// add payout outputs
@@ -109,7 +113,7 @@ const buy = async (
         new helios.Value(payout.amountLovelace)
       )
   );
-  payoutOutputs.forEach((output) => output.correctLovelace(parameter));
+  payoutOutputs.forEach((output) => output.correctLovelace(networkParams));
   tx.addOutputs(payoutOutputs);
 
   /// add handle buy output
@@ -128,15 +132,14 @@ const buy = async (
     address,
     new helios.Value(0, handleAsset)
   );
-  handleBuyOutput.correctLovelace(parameter);
+  handleBuyOutput.correctLovelace(networkParams);
   tx.addOutput(handleBuyOutput);
 
   const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(parameter, address)
+    tx.finalize(networkParams, address)
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
-
   return Ok(txCompleteResult.data);
 };
 

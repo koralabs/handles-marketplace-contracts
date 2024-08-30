@@ -15,7 +15,7 @@
   "author": "Kora Labs <hello@koralabs.io>",
   "license": "ISC",
   "devDependencies": {
-    "@koralabs/helios": "0.16.8-1",
+    "@koralabs/helios": "0.16.8-2",
     "@koralabs/kora-labs-common": "^4.0.7",
     "@koralabs/kora-labs-contract-testing": "0.0.7",
     "@types/node": "^22.1.0",
