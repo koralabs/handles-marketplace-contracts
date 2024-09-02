@@ -4,15 +4,12 @@ import { Parameters } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
 const buy = async (
   blockfrostApiKey: string,
   address: helios.Address,
-  handlePolicyId: string,
-  handleName: string,
   txHash: string,
   txIndex: number,
   parameters: Parameters
@@ -117,24 +114,11 @@ const buy = async (
   tx.addOutputs(payoutOutputs);
 
   /// add handle buy output
-  const handleAsset = new helios.Assets([
-    [
-      handlePolicyId,
-      [
-        [
-          `${AssetNameLabel.LBL_222}${Buffer.from(handleName).toString("hex")}`,
-          1,
-        ],
-      ],
-    ],
-  ]);
-  const handleBuyOutput = new helios.TxOutput(
-    address,
-    new helios.Value(0, handleAsset)
-  );
+  const handleBuyOutput = new helios.TxOutput(address, handleUtxo.value);
   handleBuyOutput.correctLovelace(networkParams);
   tx.addOutput(handleBuyOutput);
 
+  /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
     tx.finalize(networkParams, address)
   ).complete();

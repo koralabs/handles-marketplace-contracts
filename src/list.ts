@@ -44,6 +44,7 @@ const list = async (
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
 
+  /// take fund and handle asset
   const handleAsset = new helios.Assets([
     [
       handlePolicyId,
@@ -70,13 +71,14 @@ const list = async (
   const datum = mayFail(() => buildDatum(payouts, owner));
   if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
 
-  const output = new helios.TxOutput(
+  /// ada handle list update
+  const handleListOutput = new helios.TxOutput(
     helios.Address.fromHash(uplcProgram.validatorHash),
     new helios.Value(0n, handleAsset),
     datum.data
   );
-  output.correctLovelace(paramter);
-  tx.addOutput(output);
+  handleListOutput.correctLovelace(paramter);
+  tx.addOutput(handleListOutput);
 
   const txCompleteResult = await mayFailAsync(() =>
     tx.finalize(paramter, address)

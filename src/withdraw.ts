@@ -4,15 +4,12 @@ import { Parameters } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
 const withdraw = async (
   blockfrostApiKey: string,
   address: helios.Address,
-  handlePolicyId: string,
-  handleName: string,
   txHash: string,
   txIndex: number,
   parameters: Parameters
@@ -68,7 +65,7 @@ const withdraw = async (
   /// build tx
   const tx = new helios.Tx();
 
-  /// take fund to pay payouts
+  /// take fund
   const minFee = 5_000_000n;
   const [selected] = helios.CoinSelection.selectLargestFirst(
     utxos,
@@ -80,7 +77,7 @@ const withdraw = async (
   const redeemer = mayFail(() => WithdrawOrUpdate());
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
-  /// collect handle NFT to buy
+  /// collect handle NFT to withdraw
   tx.addInput(handleUtxo, redeemer.data);
   tx.attachScript(uplcProgram);
 
@@ -89,24 +86,11 @@ const withdraw = async (
   tx.addSigner(datum.owner.pubKeyHash);
 
   /// add handle withdraw output
-  const handleAsset = new helios.Assets([
-    [
-      handlePolicyId,
-      [
-        [
-          `${AssetNameLabel.LBL_222}${Buffer.from(handleName).toString("hex")}`,
-          1,
-        ],
-      ],
-    ],
-  ]);
-  const handleWithdrawOutput = new helios.TxOutput(
-    address,
-    new helios.Value(0, handleAsset)
-  );
+  const handleWithdrawOutput = new helios.TxOutput(address, handleUtxo.value);
   handleWithdrawOutput.correctLovelace(networkParams);
   tx.addOutput(handleWithdrawOutput);
 
+  /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
     tx.finalize(networkParams, address)
   ).complete();
