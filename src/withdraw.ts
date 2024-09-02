@@ -74,7 +74,10 @@ const withdraw = async (
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
   /// add handle withdraw output
-  const handleWithdrawOutput = new helios.TxOutput(address, handleUtxo.value);
+  const handleWithdrawOutput = new helios.TxOutput(
+    address,
+    new helios.Value(0n, handleUtxo.value.assets)
+  );
   handleWithdrawOutput.correctLovelace(networkParams);
 
   /// build tx

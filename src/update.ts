@@ -13,7 +13,7 @@ const update = async (
   txHash: string,
   txIndex: number,
   newPayouts: Payout[],
-  newOwner: helios.Address,
+  newOwner: helios.PubKeyHash,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
   const network = getNetwork(blockfrostApiKey);
@@ -82,7 +82,7 @@ const update = async (
   /// add handle update output
   const handleUpdateOutput = new helios.TxOutput(
     helios.Address.fromHash(uplcProgram.validatorHash),
-    handleUtxo.value,
+    new helios.Value(0n, handleUtxo.value.assets),
     newDatum.data
   );
   handleUpdateOutput.correctLovelace(networkParams);

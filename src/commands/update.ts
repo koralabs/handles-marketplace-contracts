@@ -1,5 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
+import { invariant } from "../helpers";
 import { update } from "../update";
 import { adaToLovelace } from "../utils";
 
@@ -29,6 +30,8 @@ const updateCommand = program
       const newCreatorAddress = helios.Address.fromBech32(
         newCreatorBech32Address
       );
+      invariant(address.pubKeyHash, "Address is invalid");
+
       const txResult = await update(
         config.blockfrostApiKey,
         address,
@@ -44,7 +47,7 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
-        address,
+        address.pubKeyHash,
         config.paramters
       );
 

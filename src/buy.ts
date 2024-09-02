@@ -104,7 +104,10 @@ const buy = async (
   payoutOutputs.forEach((output) => output.correctLovelace(networkParams));
 
   /// add handle buy output
-  const handleBuyOutput = new helios.TxOutput(address, handleUtxo.value);
+  const handleBuyOutput = new helios.TxOutput(
+    address,
+    new helios.Value(0n, handleUtxo.value.assets)
+  );
   handleBuyOutput.correctLovelace(networkParams);
 
   /// build tx
