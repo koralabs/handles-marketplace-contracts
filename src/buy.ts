@@ -62,9 +62,6 @@ const buy = async (
     );
   const networkParams = networkParamsResult.data;
 
-  /// build tx
-  const tx = new helios.Tx();
-
   /// take fund to pay payouts
   const minFee = 5_000_000n;
   const totalPayoutsLovelace = datum.payouts.reduce(
@@ -79,30 +76,24 @@ const buy = async (
     utxos,
     requiredValue
   );
-  tx.addInputs(selected);
 
-  /// redeemer
+  /// make redeemer
   const redeemer = mayFail(() => Buy(0));
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
-
-  /// collect handle NFT to buy
-  tx.addInput(handleUtxo, redeemer.data);
-  tx.attachScript(uplcProgram);
 
   /// build datum tag
   const datumTag = mayFail(() => buildDatumTag(handleUtxo.outputId));
   if (!datumTag.ok) return Err(`Building Datum Tag error: ${datumTag.error}`);
 
-  /// add marketplace fee
+  /// marketplace fee output
   const marketplaceFeeOutput = new helios.TxOutput(
     parameters.marketplaceAddress,
     new helios.Value(marketplaceFee),
     datumTag.data
   );
   marketplaceFeeOutput.correctLovelace(networkParams);
-  tx.addOutput(marketplaceFeeOutput);
 
-  /// add payout outputs
+  /// payout outputs
   const payoutOutputs = datum.payouts.map(
     (payout) =>
       new helios.TxOutput(
@@ -111,12 +102,19 @@ const buy = async (
       )
   );
   payoutOutputs.forEach((output) => output.correctLovelace(networkParams));
-  tx.addOutputs(payoutOutputs);
 
   /// add handle buy output
   const handleBuyOutput = new helios.TxOutput(address, handleUtxo.value);
   handleBuyOutput.correctLovelace(networkParams);
-  tx.addOutput(handleBuyOutput);
+
+  /// build tx
+  const tx = new helios.Tx()
+    .addInputs(selected)
+    .addInput(handleUtxo, redeemer.data)
+    .attachScript(uplcProgram)
+    .addOutput(marketplaceFeeOutput)
+    .addOutputs(payoutOutputs)
+    .addOutput(handleBuyOutput);
 
   /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>

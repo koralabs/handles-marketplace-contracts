@@ -45,6 +45,7 @@ const list = async (
   const uplcProgram = uplcProgramResult.data;
 
   /// take fund and handle asset
+  const minFee = 5_000_000n;
   const handleAsset = new helios.Assets([
     [
       handlePolicyId,
@@ -56,8 +57,6 @@ const list = async (
       ],
     ],
   ]);
-
-  const minFee = 5_000_000n;
   const minValue = new helios.Value(minFee, handleAsset);
   const selectResult = mayFail(() =>
     helios.CoinSelection.selectLargestFirst(utxos, minValue)
@@ -65,9 +64,7 @@ const list = async (
   if (!selectResult.ok) return Err(selectResult.error);
   const [selected] = selectResult.data;
 
-  const tx = new helios.Tx();
-  tx.addInputs(selected);
-
+  /// build datum
   const datum = mayFail(() => buildDatum(payouts, owner));
   if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
 
@@ -78,7 +75,9 @@ const list = async (
     datum.data
   );
   handleListOutput.correctLovelace(paramter);
-  tx.addOutput(handleListOutput);
+
+  /// build tx
+  const tx = new helios.Tx().addInputs(selected).addOutput(handleListOutput);
 
   const txCompleteResult = await mayFailAsync(() =>
     tx.finalize(paramter, address)

@@ -62,32 +62,28 @@ const withdraw = async (
     );
   const networkParams = networkParamsResult.data;
 
-  /// build tx
-  const tx = new helios.Tx();
-
   /// take fund
   const minFee = 5_000_000n;
   const [selected] = helios.CoinSelection.selectLargestFirst(
     utxos,
     new helios.Value(minFee)
   );
-  tx.addInputs(selected);
 
   /// redeemer
   const redeemer = mayFail(() => WithdrawOrUpdate());
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
-  /// collect handle NFT to withdraw
-  tx.addInput(handleUtxo, redeemer.data);
-  tx.attachScript(uplcProgram);
-
-  /// add owner signature
-  tx.addSigner(datum.owner);
-
   /// add handle withdraw output
   const handleWithdrawOutput = new helios.TxOutput(address, handleUtxo.value);
   handleWithdrawOutput.correctLovelace(networkParams);
-  tx.addOutput(handleWithdrawOutput);
+
+  /// build tx
+  const tx = new helios.Tx()
+    .addInputs(selected)
+    .addInput(handleUtxo, redeemer.data) /// collect handle nft
+    .attachScript(uplcProgram) /// attach spending validator
+    .addSigner(datum.owner) /// sign with owner
+    .addOutput(handleWithdrawOutput);
 
   /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
