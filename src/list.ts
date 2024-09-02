@@ -13,7 +13,7 @@ const list = async (
   handlePolicyId: string,
   handleName: string,
   payouts: Payout[],
-  owner: helios.Address,
+  owner: helios.PubKeyHash,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
   const network = getNetwork(blockfrostApiKey);

@@ -6,6 +6,7 @@ import {
   HANDLE_POLICY_ID,
   minLovelace,
   ONWER_ADDRESS,
+  OWNER_PUB_KEY_KEY,
   SPAM_TOKEN_POLICY_ID,
 } from "./constants";
 
@@ -36,6 +37,21 @@ class BuyFixture extends Fixture {
   async initialize() {
     this.redeemer = Buy(this.payoutOutputsOffset);
     const datum = buildDatum(this.payouts, this.owner);
+
+    const handleAsset = new helios.Assets([
+      [
+        HANDLE_POLICY_ID,
+        [
+          [
+            `${AssetNameLabel.LBL_222}${Buffer.from(this.handleName).toString(
+              "hex"
+            )}`,
+            1,
+          ],
+        ],
+      ],
+    ]);
+
     this.inputs = [
       new helios.TxInput( // money & collateral
         new helios.TxOutputId(getNewFakeUtxoId()),
@@ -60,19 +76,7 @@ class BuyFixture extends Fixture {
         new helios.TxOutputId(this.spendingUtxoId),
         new helios.TxOutput(
           this.scriptAddress,
-          new helios.Value(minLovelace, [
-            [
-              HANDLE_POLICY_ID,
-              [
-                [
-                  `${AssetNameLabel.LBL_222}${Buffer.from(
-                    this.handleName
-                  ).toString("hex")}`,
-                  1,
-                ],
-              ],
-            ],
-          ]),
+          new helios.Value(minLovelace, handleAsset),
           datum
         )
       ),
@@ -80,7 +84,7 @@ class BuyFixture extends Fixture {
 
     this.outputs = this.payoutOutputs.map(
       (payout, index) =>
-        new helios.TxOutput( /// marketplace address
+        new helios.TxOutput(
           payout.address,
           new helios.Value(payout.amountLovelace),
           index == this.payoutOutputsOffset ? this.datumTag : undefined
@@ -93,16 +97,14 @@ class BuyFixture extends Fixture {
   }
 }
 
-class WithdrawOrUpdateFixture extends Fixture {
+class UpdateFixture extends Fixture {
   handleName = "golddydev";
 
   payouts: Payout[] = [];
-  newPayouts: Payout[] | undefined = undefined;
-  owner: helios.Address = ONWER_ADDRESS;
+  ownerPubKeyHash: helios.PubKeyHash = OWNER_PUB_KEY_KEY;
 
-  nftOutputAddress: helios.Address = helios.Address.fromBech32(
-    this.owner.toBech32()
-  );
+  newPayouts: Payout[] = [];
+  newOwnerPubKeyHash = helios.PubKeyHash.fromHex(this.ownerPubKeyHash.hex);
 
   constructor(validatorHash: helios.ValidatorHash) {
     super(validatorHash);
@@ -110,9 +112,9 @@ class WithdrawOrUpdateFixture extends Fixture {
 
   async initialize() {
     this.redeemer = WithdrawOrUpdate();
-    const datum = buildDatum(this.payouts, this.owner);
+    const datum = buildDatum(this.payouts, this.ownerPubKeyHash);
 
-    const nftValue = new helios.Value(minLovelace, [
+    const handleAsset = new helios.Assets([
       [
         HANDLE_POLICY_ID,
         [
@@ -133,20 +135,82 @@ class WithdrawOrUpdateFixture extends Fixture {
           new helios.Value(BigInt(500_000_000))
         )
       ),
-      new helios.TxInput( /// Handle NFT to withdraw or update
+      new helios.TxInput( /// Handle NFT to update
         new helios.TxOutputId(getNewFakeUtxoId()),
-        new helios.TxOutput(this.scriptAddress, nftValue, datum)
+        new helios.TxOutput(
+          this.scriptAddress,
+          new helios.Value(minLovelace, handleAsset),
+          datum
+        )
       ),
     ];
 
-    const newDatum = this.newPayouts
-      ? buildDatum(this.newPayouts, this.owner)
-      : null;
+    const newDatum = buildDatum(this.newPayouts, this.newOwnerPubKeyHash);
     this.outputs = [
-      new helios.TxOutput(this.nftOutputAddress, nftValue, newDatum),
+      new helios.TxOutput(
+        this.scriptAddress,
+        new helios.Value(minLovelace, handleAsset),
+        newDatum
+      ),
     ];
+
     return this;
   }
 }
 
-export { BuyFixture, WithdrawOrUpdateFixture };
+class WithdrawFixture extends Fixture {
+  handleName = "golddydev";
+
+  payouts: Payout[] = [];
+  ownerPubKeyHash: helios.PubKeyHash = OWNER_PUB_KEY_KEY;
+
+  constructor(validatorHash: helios.ValidatorHash) {
+    super(validatorHash);
+  }
+
+  async initialize() {
+    this.redeemer = WithdrawOrUpdate();
+    const datum = buildDatum(this.payouts, this.ownerPubKeyHash);
+
+    const handleAsset = new helios.Assets([
+      [
+        HANDLE_POLICY_ID,
+        [
+          [
+            `${AssetNameLabel.LBL_222}${Buffer.from(this.handleName).toString(
+              "hex"
+            )}`,
+            1,
+          ],
+        ],
+      ],
+    ]);
+
+    const fundAddress = await getAddressAtDerivation(0);
+    this.inputs = [
+      new helios.TxInput( // money & collateral
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(fundAddress, new helios.Value(BigInt(500_000_000)))
+      ),
+      new helios.TxInput( /// Handle NFT to withdraw
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(
+          this.scriptAddress,
+          new helios.Value(minLovelace, handleAsset),
+          datum
+        )
+      ),
+    ];
+
+    this.outputs = [
+      new helios.TxOutput(
+        fundAddress,
+        new helios.Value(minLovelace, handleAsset)
+      ),
+    ];
+
+    return this;
+  }
+}
+
+export { BuyFixture, UpdateFixture, WithdrawFixture };

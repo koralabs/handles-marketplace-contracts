@@ -23,6 +23,9 @@ const ONWER_ADDRESS = helios.Address.fromHash(
     "01234567890123456789012345678901234567890123456789111111"
   )
 );
+const OWNER_PUB_KEY_KEY = helios.PubKeyHash.fromHex(
+  "01234567890123456789012345678901234567890123456789111111"
+);
 
 const MARKETPLACE_ADDRESS = helios.Address.fromBech32(
   "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw"
@@ -79,6 +82,7 @@ export {
   MARKETPLACE_ADDRESS,
   minLovelace,
   ONWER_ADDRESS,
+  OWNER_PUB_KEY_KEY,
   PAYOUT_ADDRESSES,
   SPAM_TOKEN_POLICY_ID,
 };

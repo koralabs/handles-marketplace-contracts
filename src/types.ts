@@ -7,7 +7,7 @@ interface Payout {
 
 interface Datum {
   payouts: Payout[];
-  owner: helios.Address;
+  owner: helios.PubKeyHash;
 }
 
 interface Parameters {

@@ -1,5 +1,4 @@
 import { buildDatumTag } from "../datum";
-import { invariant } from "../helpers";
 import { adaToLovelace } from "../utils";
 
 import {
@@ -8,7 +7,7 @@ import {
   PAYOUT_ADDRESSES,
   SPAM_TOKEN_POLICY_ID,
 } from "./constants";
-import { BuyFixture, WithdrawOrUpdateFixture } from "./fixtures";
+import { BuyFixture, UpdateFixture, WithdrawFixture } from "./fixtures";
 
 import * as helios from "@koralabs/helios";
 import {
@@ -289,54 +288,14 @@ const runTests = async (file: string) => {
     "First output address must be matched with payout"
   );
 
-  /// --------------- WITHDRAW or UPDATE ---------------
+  /// --------------- UPDATE ---------------
 
   /// ---------- Should Approve ----------
-  /// Withdraw
-  await tester.test(
-    "Withdraw",
-    "can withdraw nft",
-    new Test(program, async (hash) => {
-      const fixture = new WithdrawOrUpdateFixture(hash);
-
-      fixture.payouts = [
-        { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
-        { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
-        { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
-      ];
-
-      invariant(fixture.owner.pubKeyHash, "Fixture owner is not valid");
-      fixture.signatories = [fixture.owner.pubKeyHash];
-      return await fixture.initialize();
-    })
-  );
-
-  /// ---------- Should Deny - Owner not signed ----------
-  /// Withdraw without owner signature
-  await tester.test(
-    "Withdraw",
-    "can not withdraw nft, if owner not signed",
-    new Test(program, async (hash) => {
-      const fixture = new WithdrawOrUpdateFixture(hash);
-
-      fixture.payouts = [
-        { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
-        { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
-        { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
-      ];
-      return await fixture.initialize();
-    }),
-    false,
-    "Must be signed by owner"
-  );
-
-  /// ---------- Should Approve ----------
-  /// Update
   await tester.test(
     "Update",
     "can update nft",
     new Test(program, async (hash) => {
-      const fixture = new WithdrawOrUpdateFixture(hash);
+      const fixture = new UpdateFixture(hash);
 
       fixture.payouts = [
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
@@ -347,8 +306,7 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
       ];
 
-      invariant(fixture.owner.pubKeyHash, "Fixture owner is not valid");
-      fixture.signatories = [fixture.owner.pubKeyHash];
+      fixture.signatories = [fixture.ownerPubKeyHash];
       return await fixture.initialize();
     })
   );
@@ -359,7 +317,7 @@ const runTests = async (file: string) => {
     "Update",
     "can not update nft, if owner not signed",
     new Test(program, async (hash) => {
-      const fixture = new WithdrawOrUpdateFixture(hash);
+      const fixture = new UpdateFixture(hash);
 
       fixture.payouts = [
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
@@ -369,6 +327,45 @@ const runTests = async (file: string) => {
       fixture.newPayouts = [
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
       ];
+      return await fixture.initialize();
+    }),
+    false,
+    "Must be signed by owner"
+  );
+
+  /// ---------- Should Approve ----------
+  /// Withdraw
+  await tester.test(
+    "Withdraw",
+    "can withdraw nft",
+    new Test(program, async (hash) => {
+      const fixture = new WithdrawFixture(hash);
+
+      fixture.payouts = [
+        { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
+        { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
+        { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
+      ];
+
+      fixture.signatories = [fixture.ownerPubKeyHash];
+      return await fixture.initialize();
+    })
+  );
+
+  /// ---------- Should Deny - Owner not signed ----------
+  /// Withdraw without owner signature
+  await tester.test(
+    "Withdraw",
+    "can not withdraw nft, if owner not signed",
+    new Test(program, async (hash) => {
+      const fixture = new WithdrawFixture(hash);
+
+      fixture.payouts = [
+        { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
+        { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
+        { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
+      ];
+
       return await fixture.initialize();
     }),
     false,

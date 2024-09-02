@@ -12,8 +12,10 @@ const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
   );
 };
 
-const buildDatum = (payouts: Payout[], owner: helios.Address): helios.Datum => {
-  invariant(!!owner.pubKeyHash, "Not valid owner");
+const buildDatum = (
+  payouts: Payout[],
+  owner: helios.PubKeyHash
+): helios.Datum => {
   const data = new helios.ListData([
     new helios.ListData(
       payouts.map(
@@ -24,7 +26,7 @@ const buildDatum = (payouts: Payout[], owner: helios.Address): helios.Datum => {
           ])
       )
     ),
-    new helios.ByteArrayData(owner.pubKeyHash.bytes),
+    new helios.ByteArrayData(owner.bytes),
   ]);
   return helios.Datum.inline(data);
 };
@@ -37,7 +39,7 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
     cborString: datumDataCborHex,
   });
 
-  const owner = helios.Address.fromHash(decoded[1].slice(2));
+  const owner = helios.PubKeyHash.fromHex(decoded[1].slice(2));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payouts: Payout[] = decoded[0].map((rawPayout: any) => {
     const address = helios.Address.fromHex(rawPayout[0].slice(2));
@@ -46,8 +48,8 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
   });
 
   return {
-    owner,
     payouts,
+    owner,
   };
 };
 

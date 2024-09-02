@@ -82,8 +82,7 @@ const withdraw = async (
   tx.attachScript(uplcProgram);
 
   /// add owner signature
-  if (!datum.owner.pubKeyHash) return Err("Owner in Datum is not correct");
-  tx.addSigner(datum.owner.pubKeyHash);
+  tx.addSigner(datum.owner);
 
   /// add handle withdraw output
   const handleWithdrawOutput = new helios.TxOutput(address, handleUtxo.value);

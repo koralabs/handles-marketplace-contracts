@@ -4,6 +4,7 @@ import { list } from "../list";
 import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
+import { invariant } from "helpers";
 
 const buyCommand = program
   .command("list")
@@ -25,6 +26,8 @@ const buyCommand = program
 
       const address = helios.Address.fromBech32(bech32Address);
       const creatorAddress = helios.Address.fromBech32(creatorBech32Address);
+      invariant(address.pubKeyHash, "Address is invalid");
+
       const txResult = await list(
         config.blockfrostApiKey,
         address,
@@ -37,7 +40,7 @@ const buyCommand = program
             amountLovelace: adaToLovelace(Number(priceString) * 0.1),
           },
         ],
-        address,
+        address.pubKeyHash,
         config.paramters
       );
 
