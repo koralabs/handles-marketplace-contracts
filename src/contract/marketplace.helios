@@ -214,7 +214,8 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
             // owner can cancel or update their listing
             // at any time.
             // is signed by owner
-            tx.is_signed_by(PubKeyHash::new(datum.owner))
+            assert(tx.is_signed_by(PubKeyHash::new(datum.owner)), "Must be signed by owner");
+            true
         }
     }
 }

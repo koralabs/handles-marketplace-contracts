@@ -1,4 +1,5 @@
 import { buildDatumTag } from "../datum";
+import { invariant } from "../helpers";
 import { adaToLovelace } from "../utils";
 
 import {
@@ -303,7 +304,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[1], amountLovelace: adaToLovelace(150) },
         { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
       ];
-      fixture.signatories = [fixture.owner];
+
+      invariant(fixture.owner.pubKeyHash, "Fixture owner is not valid");
+      fixture.signatories = [fixture.owner.pubKeyHash];
       return await fixture.initialize();
     })
   );
@@ -323,7 +326,8 @@ const runTests = async (file: string) => {
       ];
       return await fixture.initialize();
     }),
-    false
+    false,
+    "Must be signed by owner"
   );
 
   /// ---------- Should Approve ----------
@@ -342,7 +346,9 @@ const runTests = async (file: string) => {
       fixture.newPayouts = [
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
       ];
-      fixture.signatories = [fixture.owner];
+
+      invariant(fixture.owner.pubKeyHash, "Fixture owner is not valid");
+      fixture.signatories = [fixture.owner.pubKeyHash];
       return await fixture.initialize();
     })
   );
@@ -365,7 +371,8 @@ const runTests = async (file: string) => {
       ];
       return await fixture.initialize();
     }),
-    false
+    false,
+    "Must be signed by owner"
   );
 };
 
