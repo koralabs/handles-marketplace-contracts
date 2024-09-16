@@ -53,9 +53,7 @@ const withdraw = async (
   const datum = datumResult.data;
 
   /// fetch protocol parameter
-  const networkParamsResult = await mayFailAsync(() =>
-    fetchNetworkParameters(network)
-  ).complete();
+  const networkParamsResult = mayFail(() => fetchNetworkParameters(network));
   if (!networkParamsResult.ok)
     return Err(
       `Fetching Network Parameter error: ${networkParamsResult.error}`
