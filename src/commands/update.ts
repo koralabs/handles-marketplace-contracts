@@ -1,5 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
+import { deployedUTxOs } from "../deployed";
 import { update, UpdateConfig } from "../update";
 import { adaToLovelace } from "../utils";
 
@@ -40,6 +41,20 @@ const updateCommand = program
         new helios.TxOutputId(`${txHash}#${txIndex}`)
       );
 
+      let refScriptCborUtxo: string | undefined = undefined;
+      const deployedUTxO = deployedUTxOs[config.network];
+
+      if (deployedUTxO) {
+        const refScriptUTxo = await api.getUtxo(
+          new helios.TxOutputId(
+            `${deployedUTxO.txHash}#${deployedUTxO.txIndex}`
+          )
+        );
+        refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
+          "hex"
+        );
+      }
+
       const updateConfig: UpdateConfig = {
         changeBech32Address: bech32Address,
         cborUtxos: utxos.map((utxo) =>
@@ -56,6 +71,7 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
+        refScriptCborUtxo,
       };
 
       const txResult = await update(updateConfig, config.paramters);

@@ -12,20 +12,22 @@ interface WithdrawConfig {
   changeBech32Address: string;
   cborUtxos: string[];
   handleCborUtxo: string; /// handle (to withdraw) is in this utxo
+  refScriptCborUtxo?: string;
 }
 
 const withdraw = async (
   config: WithdrawConfig,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
-  const { changeBech32Address, cborUtxos, handleCborUtxo } = config;
+  const { changeBech32Address, cborUtxos, handleCborUtxo, refScriptCborUtxo } =
+    config;
 
   /// fetch network parameter
   const networkParams = fetchNetworkParameters(NETWORK);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
-    getUplcProgram(parameters)
+    getUplcProgram(parameters, true)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
@@ -71,10 +73,20 @@ const withdraw = async (
   handleWithdrawOutput.correctLovelace(networkParams);
 
   /// build tx
-  const tx = new helios.Tx()
+  let tx = new helios.Tx()
     .addInputs(selected)
-    .addInput(handleUtxo, redeemer.data) /// collect handle nft
-    .attachScript(uplcProgram) /// attach spending validator
+    .addInput(handleUtxo, redeemer.data); /// collect handle nft
+
+  if (refScriptCborUtxo) {
+    const refScriptUtxo = helios.TxInput.fromFullCbor([
+      ...Buffer.from(refScriptCborUtxo, "hex"),
+    ]);
+    tx = tx.addRefInput(refScriptUtxo, uplcProgram);
+  } else {
+    tx = tx.attachScript(uplcProgram);
+  }
+
+  tx = tx
     .addSigner(datum.owner) /// sign with owner
     .addOutput(handleWithdrawOutput);
 

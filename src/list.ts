@@ -26,7 +26,7 @@ const list = async (
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
-    getUplcProgram(parameters)
+    getUplcProgram(parameters, true)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);

@@ -1,5 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
+import { deployedUTxOs } from "../deployed";
 import { withdraw, WithdrawConfig } from "../withdraw";
 
 import * as helios from "@koralabs/helios";
@@ -24,12 +25,25 @@ const withdrawCommand = program
       new helios.TxOutputId(`${txHash}#${txIndex}`)
     );
 
+    let refScriptCborUtxo: string | undefined = undefined;
+    const deployedUTxO = deployedUTxOs[config.network];
+
+    if (deployedUTxO) {
+      const refScriptUTxo = await api.getUtxo(
+        new helios.TxOutputId(`${deployedUTxO.txHash}#${deployedUTxO.txIndex}`)
+      );
+      refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
+        "hex"
+      );
+    }
+
     const withdrawConfig: WithdrawConfig = {
       changeBech32Address: bech32Address,
       cborUtxos: utxos.map((utxo) =>
         Buffer.from(utxo.toFullCbor()).toString("hex")
       ),
       handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
+      refScriptCborUtxo,
     };
 
     const txResult = await withdraw(withdrawConfig, config.paramters);

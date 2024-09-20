@@ -22,16 +22,8 @@ const loadConfig = () => {
       ),
     ],
     marketplaceAddress: helios.Address.fromBech32(
-      "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw"
+      "addr_test1qrzv95wsszgqedkjtkrmway4gsgdq87nu6ajrcjapyfslf2a6htngzcpqyjuzgq0wnvdtjdz28uwhv8d4pwds2gss5gslyymve"
     ),
-    // authorizers: [
-    //   helios.PubKeyHash.fromHex(
-    //     "ea018bbdec1b9963f3cf37a7d7d80c0fd16d29722d0453fcfa9549ae"
-    //   ),
-    // ],
-    // marketplaceAddress: helios.Address.fromBech32(
-    //   "addr_test1qr4qrzaaasdejclneum6047cps8azmffwgksg5lul225nth58fldnc83x5jnfxg37rmvmdv2rn3emrmh9ptry9vzvjxqn5c55p"
-    // ),
   };
 
   return Ok({
