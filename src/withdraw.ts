@@ -1,5 +1,6 @@
+import { MIN_FEE, NETWORK } from "./constants";
 import { decodeDatum } from "./datum";
-import { getNetwork, mayFail, mayFailAsync } from "./helpers";
+import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
@@ -7,41 +8,36 @@ import * as helios from "@koralabs/helios";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+interface WithdrawConfig {
+  changeBech32Address: string;
+  cborUtxos: string[];
+  handleCborUtxo: string; /// handle (to withdraw) is in this utxo
+}
+
 const withdraw = async (
-  blockfrostApiKey: string,
-  address: helios.Address,
-  txHash: string,
-  txIndex: number,
+  config: WithdrawConfig,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
-  const network = getNetwork(blockfrostApiKey);
-  const isTestnet = network != "mainnet";
-  helios.config.set({
-    IS_TESTNET: isTestnet,
-    AUTO_SET_VALIDITY_RANGE: true,
-  });
+  const { changeBech32Address, cborUtxos, handleCborUtxo } = config;
 
-  const api = new helios.BlockfrostV0(network, blockfrostApiKey);
+  /// fetch network parameter
+  const networkParams = fetchNetworkParameters(NETWORK);
 
-  const handleUtxoResult = await mayFailAsync(() =>
-    api.getUtxo(new helios.TxOutputId(`${txHash}#${txIndex}`))
-  ).complete();
-  if (!handleUtxoResult.ok)
-    return Err(`Getting Handle UTxO error: ${handleUtxoResult.error}`);
-  const handleUtxo = handleUtxoResult.data;
-
-  const utxosResult = await mayFailAsync(() =>
-    api.getUtxos(address)
-  ).complete();
-  if (!utxosResult.ok) return Err(`Getting UTxOs error: ${utxosResult.error}`);
-  const utxos = utxosResult.data;
-
+  /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
     getUplcProgram(parameters)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
+
+  const changeAddress = helios.Address.fromBech32(changeBech32Address);
+  const utxos = cborUtxos.map((cborUtxo) =>
+    helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
+  );
+  const handleUtxo = helios.TxInput.fromFullCbor([
+    ...Buffer.from(handleCborUtxo, "hex"),
+  ]);
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -52,19 +48,15 @@ const withdraw = async (
     return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
   const datum = datumResult.data;
 
-  /// fetch protocol parameter
-  const networkParamsResult = mayFail(() => fetchNetworkParameters(network));
-  if (!networkParamsResult.ok)
-    return Err(
-      `Fetching Network Parameter error: ${networkParamsResult.error}`
-    );
-  const networkParams = networkParamsResult.data;
+  const ownerPubKeyHash = changeAddress.pubKeyHash;
+  if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
+  if (datum.owner.toString() != ownerPubKeyHash.toString())
+    return Err(`You must be owner to update`);
 
   /// take fund
-  const minFee = 5_000_000n;
-  const [selected] = helios.CoinSelection.selectLargestFirst(
+  const [selected, unSelected] = helios.CoinSelection.selectLargestFirst(
     utxos,
-    new helios.Value(minFee)
+    new helios.Value(MIN_FEE)
   );
 
   /// redeemer
@@ -73,7 +65,7 @@ const withdraw = async (
 
   /// add handle withdraw output
   const handleWithdrawOutput = new helios.TxOutput(
-    address,
+    changeAddress,
     new helios.Value(0n, handleUtxo.value.assets)
   );
   handleWithdrawOutput.correctLovelace(networkParams);
@@ -88,7 +80,7 @@ const withdraw = async (
 
   /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, address)
+    tx.finalize(networkParams, changeAddress, unSelected)
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
@@ -96,3 +88,4 @@ const withdraw = async (
 };
 
 export { withdraw };
+export type { WithdrawConfig };

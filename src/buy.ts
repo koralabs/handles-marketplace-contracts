@@ -1,47 +1,43 @@
+import { MIN_FEE, MIN_LOVELACE, NETWORK } from "./constants";
 import { buildDatumTag, decodeDatum } from "./datum";
-import { getNetwork, mayFail, mayFailAsync } from "./helpers";
+import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters } from "./types";
-import { fetchNetworkParameters, getUplcProgram } from "./utils";
+import { bigIntMax, fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
 import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+interface BuyConfig {
+  changeBech32Address: string;
+  cborUtxos: string[];
+  handleCborUtxo: string; /// handle (to buy) is in this utxo
+}
+
 const buy = async (
-  blockfrostApiKey: string,
-  address: helios.Address,
-  txHash: string,
-  txIndex: number,
+  config: BuyConfig,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
-  const network = getNetwork(blockfrostApiKey);
-  const isTestnet = network != "mainnet";
-  helios.config.set({
-    IS_TESTNET: isTestnet,
-    AUTO_SET_VALIDITY_RANGE: true,
-  });
+  const { changeBech32Address, cborUtxos, handleCborUtxo } = config;
 
-  const api = new helios.BlockfrostV0(network, blockfrostApiKey);
+  /// fetch network parameter
+  const networkParams = fetchNetworkParameters(NETWORK);
 
-  const handleUtxoResult = await mayFailAsync(() =>
-    api.getUtxo(new helios.TxOutputId(`${txHash}#${txIndex}`))
-  ).complete();
-  if (!handleUtxoResult.ok)
-    return Err(`Getting Handle UTxO error: ${handleUtxoResult.error}`);
-  const handleUtxo = handleUtxoResult.data;
-
-  const utxosResult = await mayFailAsync(() =>
-    api.getUtxos(address)
-  ).complete();
-  if (!utxosResult.ok) return Err(`Getting UTxOs error: ${utxosResult.error}`);
-  const utxos = utxosResult.data;
-
+  /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
     getUplcProgram(parameters)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
+
+  const changeAddress = helios.Address.fromBech32(changeBech32Address);
+  const utxos = cborUtxos.map((cborUtxo) =>
+    helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
+  );
+  const handleUtxo = helios.TxInput.fromFullCbor([
+    ...Buffer.from(handleCborUtxo, "hex"),
+  ]);
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -52,25 +48,16 @@ const buy = async (
     return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
   const datum = datumResult.data;
 
-  /// fetch protocol parameter
-  const networkParamsResult = mayFail(() => fetchNetworkParameters(network));
-  if (!networkParamsResult.ok)
-    return Err(
-      `Fetching Network Parameter error: ${networkParamsResult.error}`
-    );
-  const networkParams = networkParamsResult.data;
-
   /// take fund to pay payouts
-  const minFee = 5_000_000n;
   const totalPayoutsLovelace = datum.payouts.reduce(
-    (acc, cur) => acc + cur.amountLovelace,
+    (acc, cur) => acc + bigIntMax(cur.amountLovelace, MIN_LOVELACE),
     0n
   );
   const marketplaceFee = (totalPayoutsLovelace * 50n) / 49n / 50n;
   const requiredValue = new helios.Value(
-    minFee + totalPayoutsLovelace + marketplaceFee
+    MIN_FEE + totalPayoutsLovelace + bigIntMax(marketplaceFee, MIN_LOVELACE)
   );
-  const [selected] = helios.CoinSelection.selectLargestFirst(
+  const [selected, unSelected] = helios.CoinSelection.selectLargestFirst(
     utxos,
     requiredValue
   );
@@ -99,11 +86,13 @@ const buy = async (
         new helios.Value(payout.amountLovelace)
       )
   );
-  payoutOutputs.forEach((output) => output.correctLovelace(networkParams));
+  payoutOutputs.forEach((payoutOutput) =>
+    payoutOutput.correctLovelace(networkParams)
+  );
 
   /// add handle buy output
   const handleBuyOutput = new helios.TxOutput(
-    address,
+    changeAddress,
     new helios.Value(0n, handleUtxo.value.assets)
   );
   handleBuyOutput.correctLovelace(networkParams);
@@ -119,7 +108,7 @@ const buy = async (
 
   /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, address)
+    tx.finalize(networkParams, changeAddress, unSelected)
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
@@ -127,3 +116,4 @@ const buy = async (
 };
 
 export { buy };
+export type { BuyConfig };

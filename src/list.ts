@@ -1,42 +1,30 @@
+import { HANDLE_POLICY_ID, MIN_LOVELACE, NETWORK } from "./constants";
 import { buildDatum } from "./datum";
-import { getNetwork, mayFail, mayFailAsync } from "./helpers";
+import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters, Payout } from "./types";
-import { getUplcProgram } from "./utils";
+import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
+interface ListConfig {
+  changeBech32Address: string;
+  cborUtxos: string[];
+  handleHex: string;
+  payouts: Payout[];
+}
+
 const list = async (
-  blockfrostApiKey: string,
-  address: helios.Address,
-  handlePolicyId: string,
-  handleName: string,
-  payouts: Payout[],
-  owner: helios.PubKeyHash,
+  config: ListConfig,
   parameters: Parameters
 ): Promise<Result<helios.Tx, string>> => {
-  const network = getNetwork(blockfrostApiKey);
-  const isTestnet = network != "mainnet";
-  helios.config.set({
-    IS_TESTNET: isTestnet,
-    AUTO_SET_VALIDITY_RANGE: true,
-  });
+  const { changeBech32Address, cborUtxos, handleHex, payouts } = config;
 
-  const api = new helios.BlockfrostV0(network, blockfrostApiKey);
-  const paramterResult = await mayFailAsync(() =>
-    api.getParameters()
-  ).complete();
-  if (!paramterResult.ok)
-    return Err(`Getting Network Parameter ${paramterResult.error}`);
-  const paramter = paramterResult.data;
+  /// fetch network parameter
+  const networkParams = fetchNetworkParameters(NETWORK);
 
-  const utxosResult = await mayFailAsync(() =>
-    api.getUtxos(address)
-  ).complete();
-  if (!utxosResult.ok) return Err(`Getting UTxOs error: ${utxosResult.error}`);
-  const utxos = utxosResult.data;
-
+  /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
     getUplcProgram(parameters)
   ).complete();
@@ -44,28 +32,26 @@ const list = async (
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
 
+  const changeAddress = helios.Address.fromBech32(changeBech32Address);
+  const utxos = cborUtxos.map((cborUtxo) =>
+    helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
+  );
+
   /// take fund and handle asset
-  const minFee = 5_000_000n;
   const handleAsset = new helios.Assets([
-    [
-      handlePolicyId,
-      [
-        [
-          `${AssetNameLabel.LBL_222}${Buffer.from(handleName).toString("hex")}`,
-          1,
-        ],
-      ],
-    ],
+    [HANDLE_POLICY_ID, [[`${AssetNameLabel.LBL_222}${handleHex}`, 1]]],
   ]);
-  const minValue = new helios.Value(minFee, handleAsset);
+  const minValue = new helios.Value(MIN_LOVELACE, handleAsset);
   const selectResult = mayFail(() =>
     helios.CoinSelection.selectLargestFirst(utxos, minValue)
   );
   if (!selectResult.ok) return Err(selectResult.error);
-  const [selected] = selectResult.data;
+  const [selected, unSelected] = selectResult.data;
 
   /// build datum
-  const datum = mayFail(() => buildDatum(payouts, owner));
+  const ownerPubKeyHash = changeAddress.pubKeyHash;
+  if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
+  const datum = mayFail(() => buildDatum(payouts, ownerPubKeyHash));
   if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
 
   /// ada handle list update
@@ -74,13 +60,13 @@ const list = async (
     new helios.Value(0n, handleAsset),
     datum.data
   );
-  handleListOutput.correctLovelace(paramter);
+  handleListOutput.correctLovelace(networkParams);
 
   /// build tx
   const tx = new helios.Tx().addInputs(selected).addOutput(handleListOutput);
 
   const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(paramter, address)
+    tx.finalize(networkParams, changeAddress, unSelected)
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
@@ -89,3 +75,4 @@ const list = async (
 };
 
 export { list };
+export type { ListConfig };

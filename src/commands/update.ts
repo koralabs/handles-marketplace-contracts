@@ -1,7 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
-import { invariant } from "../helpers";
-import { update } from "../update";
+import { update, UpdateConfig } from "../update";
 import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
@@ -30,14 +29,24 @@ const updateCommand = program
       const newCreatorAddress = helios.Address.fromBech32(
         newCreatorBech32Address
       );
-      invariant(address.pubKeyHash, "Address is invalid");
+      const api = new helios.BlockfrostV0(
+        config.network,
+        config.blockfrostApiKey
+      );
+      const utxos = await api.getUtxos(
+        helios.Address.fromBech32(bech32Address)
+      );
+      const handleUtxo = await api.getUtxo(
+        new helios.TxOutputId(`${txHash}#${txIndex}`)
+      );
 
-      const txResult = await update(
-        config.blockfrostApiKey,
-        address,
-        txHash,
-        parseInt(txIndex),
-        [
+      const updateConfig: UpdateConfig = {
+        changeBech32Address: bech32Address,
+        cborUtxos: utxos.map((utxo) =>
+          Buffer.from(utxo.toFullCbor()).toString("hex")
+        ),
+        handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
+        newPayouts: [
           {
             address,
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.9),
@@ -47,10 +56,9 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
-        address.pubKeyHash,
-        config.paramters
-      );
+      };
 
+      const txResult = await update(updateConfig, config.paramters);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());
