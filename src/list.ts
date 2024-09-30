@@ -18,7 +18,7 @@ interface ListConfig {
 const list = async (
   config: ListConfig,
   parameters: Parameters,
-  network: Network,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
   const { changeBech32Address, cborUtxos, handleHex, payouts } = config;
 
