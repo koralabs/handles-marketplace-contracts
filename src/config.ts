@@ -10,9 +10,6 @@ const loadConfig = () => {
   const blockfrostApiKey = get("BLOCKFROST_API_KEY", "string");
   if (!blockfrostApiKey.ok) return Err(blockfrostApiKey.error);
 
-  const handlePolicyId = get("HANDLE_POLICY_ID", "string");
-  if (!handlePolicyId.ok) return Err(handlePolicyId.error);
-
   const network = getNetwork(blockfrostApiKey.data);
 
   const paramters: Parameters = {
@@ -28,7 +25,6 @@ const loadConfig = () => {
 
   return Ok({
     blockfrostApiKey: blockfrostApiKey.data,
-    handlePolicyId: handlePolicyId.data,
     network,
     paramters,
   });

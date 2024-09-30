@@ -1,10 +1,11 @@
-import { MIN_FEE, MIN_LOVELACE, NETWORK } from "./constants";
+import { MIN_FEE, MIN_LOVELACE } from "./constants";
 import { buildDatumTag, decodeDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters } from "./types";
 import { bigIntMax, fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
+import { Network } from "@koralabs/kora-labs-common";
 import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -25,13 +26,14 @@ interface BuyWithAuthConfig {
 
 const buy = async (
   config: BuyConfig,
-  parameters: Parameters
+  parameters: Parameters,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
   const { changeBech32Address, cborUtxos, handleCborUtxo, refScriptCborUtxo } =
     config;
 
   /// fetch network parameter
-  const networkParams = fetchNetworkParameters(NETWORK);
+  const networkParams = fetchNetworkParameters(network);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
@@ -137,7 +139,8 @@ const buy = async (
 
 const buyWithAuth = async (
   config: BuyWithAuthConfig,
-  parameters: Parameters
+  parameters: Parameters,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
   const {
     changeBech32Address,
@@ -148,7 +151,7 @@ const buyWithAuth = async (
   } = config;
 
   /// fetch network parameter
-  const networkParams = fetchNetworkParameters(NETWORK);
+  const networkParams = fetchNetworkParameters(network);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>

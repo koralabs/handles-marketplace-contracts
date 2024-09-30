@@ -45,7 +45,7 @@ const buyCommand = program
         ],
       };
 
-      const txResult = await list(listConfig, config.paramters);
+      const txResult = await list(listConfig, config.paramters, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());

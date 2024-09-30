@@ -1,10 +1,11 @@
-import { MIN_FEE, NETWORK } from "./constants";
+import { MIN_FEE } from "./constants";
 import { decodeDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
+import { Network } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -17,13 +18,14 @@ interface WithdrawConfig {
 
 const withdraw = async (
   config: WithdrawConfig,
-  parameters: Parameters
+  parameters: Parameters,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
   const { changeBech32Address, cborUtxos, handleCborUtxo, refScriptCborUtxo } =
     config;
 
   /// fetch network parameter
-  const networkParams = fetchNetworkParameters(NETWORK);
+  const networkParams = fetchNetworkParameters(network);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>

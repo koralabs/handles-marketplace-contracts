@@ -1,11 +1,11 @@
-import { HANDLE_POLICY_ID, MIN_LOVELACE, NETWORK } from "./constants";
+import { HANDLE_POLICY_ID, MIN_LOVELACE } from "./constants";
 import { buildDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters, Payout } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { AssetNameLabel } from "@koralabs/kora-labs-common";
+import { AssetNameLabel, Network } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 interface ListConfig {
@@ -17,12 +17,13 @@ interface ListConfig {
 
 const list = async (
   config: ListConfig,
-  parameters: Parameters
+  parameters: Parameters,
+  network: Network,
 ): Promise<Result<helios.Tx, string>> => {
   const { changeBech32Address, cborUtxos, handleHex, payouts } = config;
 
   /// fetch network parameter
-  const networkParams = fetchNetworkParameters(NETWORK);
+  const networkParams = fetchNetworkParameters(network);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>

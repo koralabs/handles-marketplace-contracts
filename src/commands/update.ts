@@ -74,7 +74,11 @@ const updateCommand = program
         refScriptCborUtxo,
       };
 
-      const txResult = await update(updateConfig, config.paramters);
+      const txResult = await update(
+        updateConfig,
+        config.paramters,
+        config.network
+      );
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());

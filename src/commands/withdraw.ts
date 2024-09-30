@@ -46,7 +46,11 @@ const withdrawCommand = program
       refScriptCborUtxo,
     };
 
-    const txResult = await withdraw(withdrawConfig, config.paramters);
+    const txResult = await withdraw(
+      withdrawConfig,
+      config.paramters,
+      config.network
+    );
     if (!txResult.ok) return program.error(txResult.error);
     console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
     console.log(txResult.data.toCborHex());

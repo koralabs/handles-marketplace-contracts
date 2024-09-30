@@ -1,10 +1,11 @@
-import { MIN_FEE, NETWORK } from "./constants";
+import { MIN_FEE } from "./constants";
 import { buildDatum, decodeDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Parameters, Payout } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
+import { Network } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -18,7 +19,8 @@ interface UpdateConfig {
 
 const update = async (
   config: UpdateConfig,
-  parameters: Parameters
+  parameters: Parameters,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
   const {
     changeBech32Address,
@@ -29,7 +31,7 @@ const update = async (
   } = config;
 
   /// fetch network parameter
-  const networkParams = fetchNetworkParameters(NETWORK);
+  const networkParams = fetchNetworkParameters(network);
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>

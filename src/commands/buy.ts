@@ -46,7 +46,7 @@ program
       refScriptCborUtxo,
     };
 
-    const txResult = await buy(buyConfig, config.paramters);
+    const txResult = await buy(buyConfig, config.paramters, config.network);
     if (!txResult.ok) return program.error(txResult.error);
     console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
     console.log(txResult.data.toCborHex());
@@ -94,7 +94,11 @@ program
       refScriptCborUtxo,
     };
 
-    const txResult = await buyWithAuth(buyWithAuthConfig, config.paramters);
+    const txResult = await buyWithAuth(
+      buyWithAuthConfig,
+      config.paramters,
+      config.network
+    );
     if (!txResult.ok) return program.error(txResult.error);
     console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
     console.log(txResult.data.toCborHex());
