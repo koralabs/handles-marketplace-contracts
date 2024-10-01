@@ -1,6 +1,7 @@
 node_modules
 *testingCode.helios
 /contract
+/dist
 test.js
 *.flat
 *.log

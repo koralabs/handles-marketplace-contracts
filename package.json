@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Smart Contract of Ada Handles Marketplace",
   "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "scripts": {
+    "build": "rm -rf ./dist && npx tsc && rm -rf ./dist/tests",
     "prettier": "npx prettier -w '**/*.{js,ts,json,.*}'",
     "lint": "concurrently \"npx prettier --check '**/*.{js,ts,json,.*}'\" \"npx eslint . --max-warnings=0\"",
     "test": "tsx -r dotenv/config src/tests/tx.test.ts"

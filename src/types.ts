@@ -34,4 +34,4 @@ interface Datum {
   owner: string;
 }
 
-export { Datum, Parameters, Payout };
+export type { Datum, Parameters, Payout };
