@@ -306,7 +306,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
       ];
 
-      fixture.signatories = [fixture.ownerPubKeyHash];
+      fixture.signatories = [
+        helios.PubKeyHash.fromHex(fixture.ownerPubKeyHash),
+      ];
       return await fixture.initialize();
     })
   );
@@ -347,7 +349,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
       ];
 
-      fixture.signatories = [fixture.ownerPubKeyHash];
+      fixture.signatories = [
+        helios.PubKeyHash.fromHex(fixture.ownerPubKeyHash),
+      ];
       return await fixture.initialize();
     })
   );

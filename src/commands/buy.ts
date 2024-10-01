@@ -90,7 +90,7 @@ program
         Buffer.from(utxo.toFullCbor()).toString("hex")
       ),
       handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
-      authorizerPubKeyHash: config.paramters.authorizers[0].hex,
+      authorizerPubKeyHash: config.paramters.authorizers[0],
       refScriptCborUtxo,
     };
 

@@ -8,6 +8,15 @@ import * as helios from "@koralabs/helios";
 import { AssetNameLabel, Network } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
+/**
+ * Configuration of function to list handle
+ * @interface
+ * @typedef {object} ListConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleHex Handle name's hex format
+ * @property {Payout[]} payouts Payouts which is requried to pay when buy this handle
+ */
 interface ListConfig {
   changeBech32Address: string;
   cborUtxos: string[];
@@ -15,6 +24,13 @@ interface ListConfig {
   payouts: Payout[];
 }
 
+/**
+ * List Handle to marketplace
+ * @param {ListConfig} config
+ * @param {Parameters} parameters
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const list = async (
   config: ListConfig,
   parameters: Parameters,
@@ -52,7 +68,9 @@ const list = async (
   /// build datum
   const ownerPubKeyHash = changeAddress.pubKeyHash;
   if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
-  const datum = mayFail(() => buildDatum(payouts, ownerPubKeyHash));
+  const datum = mayFail(() =>
+    buildDatum({ payouts, owner: ownerPubKeyHash.hex })
+  );
   if (!datum.ok) return Err(`Building Datum error: ${datum.error}`);
 
   /// ada handle list update

@@ -9,6 +9,15 @@ import { Network } from "@koralabs/kora-labs-common";
 import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+/**
+ * Configuration of function to buy handle
+ * @interface
+ * @typedef {object} BuyConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {string | undefined} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ */
 interface BuyConfig {
   changeBech32Address: string;
   cborUtxos: string[];
@@ -16,6 +25,16 @@ interface BuyConfig {
   refScriptCborUtxo?: string;
 }
 
+/**
+ * Configuration of function to buy handle with one of authorizers
+ * @interface
+ * @typedef {object} BuyWithAuthConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {string} authorizerPubKeyHash Pub Key Hash of authorizer
+ * @property {string | undefined} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ */
 interface BuyWithAuthConfig {
   changeBech32Address: string;
   cborUtxos: string[];
@@ -24,6 +43,13 @@ interface BuyWithAuthConfig {
   refScriptCborUtxo?: string;
 }
 
+/**
+ * Buy Handle on marketplace
+ * @param {BuyConfig} config
+ * @param {Parameters} parameters
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const buy = async (
   config: BuyConfig,
   parameters: Parameters,
@@ -84,7 +110,7 @@ const buy = async (
 
   /// marketplace fee output
   const marketplaceFeeOutput = new helios.TxOutput(
-    parameters.marketplaceAddress,
+    helios.Address.fromBech32(parameters.marketplaceAddress),
     new helios.Value(marketplaceFee),
     datumTag.data
   );
@@ -94,7 +120,7 @@ const buy = async (
   const payoutOutputs = datum.payouts.map(
     (payout) =>
       new helios.TxOutput(
-        payout.address,
+        helios.Address.fromBech32(payout.address),
         new helios.Value(payout.amountLovelace)
       )
   );
@@ -137,6 +163,13 @@ const buy = async (
   return Ok(txCompleteResult.data);
 };
 
+/**
+ * Buy Handle on marketplace with one of authorizers
+ * @param {BuyWithAuthConfig} config
+ * @param {Parameters} parameters
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const buyWithAuth = async (
   config: BuyWithAuthConfig,
   parameters: Parameters,
@@ -201,7 +234,7 @@ const buyWithAuth = async (
   const payoutOutputs = datum.payouts.map(
     (payout, index) =>
       new helios.TxOutput(
-        payout.address,
+        helios.Address.fromBech32(payout.address),
         new helios.Value(payout.amountLovelace),
         index == 0 ? datumTag.data : undefined
       )

@@ -13,8 +13,12 @@ const getHeliosProgram = async (
 ): Promise<helios.Program> => {
   const contractFile = (await fs.readFile(contractPath)).toString();
   const program = helios.Program.new(contractFile);
-  program.parameters.AUTHORIZERS = parameters.authorizers;
-  program.parameters.MARKETPLACE_ADDRESS = parameters.marketplaceAddress;
+  program.parameters.AUTHORIZERS = parameters.authorizers.map((authorizer) =>
+    helios.PubKeyHash.fromHex(authorizer)
+  );
+  program.parameters.MARKETPLACE_ADDRESS = helios.Address.fromBech32(
+    parameters.marketplaceAddress
+  );
   return program;
 };
 

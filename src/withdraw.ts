@@ -9,6 +9,15 @@ import { Network } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+/**
+ * Configuration of function to withdraw handle
+ * @interface
+ * @typedef {object} WithdrawConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {string | undefined} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ */
 interface WithdrawConfig {
   changeBech32Address: string;
   cborUtxos: string[];
@@ -16,6 +25,13 @@ interface WithdrawConfig {
   refScriptCborUtxo?: string;
 }
 
+/**
+ * Withdraw Handle from marketplace
+ * @param {WithdrawConfig} config
+ * @param {Parameters} parameters
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const withdraw = async (
   config: WithdrawConfig,
   parameters: Parameters,
@@ -54,7 +70,7 @@ const withdraw = async (
 
   const ownerPubKeyHash = changeAddress.pubKeyHash;
   if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
-  if (datum.owner.toString() != ownerPubKeyHash.toString())
+  if (datum.owner != ownerPubKeyHash.hex)
     return Err(`You must be owner to update`);
 
   /// take fund
@@ -89,7 +105,7 @@ const withdraw = async (
   }
 
   tx = tx
-    .addSigner(datum.owner) /// sign with owner
+    .addSigner(ownerPubKeyHash) /// sign with owner
     .addOutput(handleWithdrawOutput);
 
   /// finalize tx

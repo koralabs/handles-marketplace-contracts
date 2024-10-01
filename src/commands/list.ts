@@ -23,13 +23,13 @@ const buyCommand = program
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
-      const address = helios.Address.fromBech32(bech32Address);
-      const creatorAddress = helios.Address.fromBech32(creatorBech32Address);
       const api = new helios.BlockfrostV0(
         config.network,
         config.blockfrostApiKey
       );
-      const utxos = await api.getUtxos(address);
+      const utxos = await api.getUtxos(
+        helios.Address.fromBech32(bech32Address)
+      );
       const listConfig: ListConfig = {
         changeBech32Address: bech32Address,
         cborUtxos: utxos.map((utxo) =>
@@ -37,9 +37,12 @@ const buyCommand = program
         ),
         handleHex: Buffer.from(handleName, "utf8").toString("hex"),
         payouts: [
-          { address, amountLovelace: adaToLovelace(Number(priceString) * 0.9) },
           {
-            address: creatorAddress,
+            address: bech32Address,
+            amountLovelace: adaToLovelace(Number(priceString) * 0.9),
+          },
+          {
+            address: creatorBech32Address,
             amountLovelace: adaToLovelace(Number(priceString) * 0.1),
           },
         ],

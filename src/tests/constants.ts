@@ -18,18 +18,11 @@ const AUTHORIZERS_PUB_KEY_HAHSES = [
     "01234567890123456789012345678901234567890123456789000003"
   ),
 ];
-const ONWER_ADDRESS = helios.Address.fromHash(
-  helios.PubKeyHash.fromHex(
-    "01234567890123456789012345678901234567890123456789111111"
-  )
-);
-const OWNER_PUB_KEY_KEY = helios.PubKeyHash.fromHex(
-  "01234567890123456789012345678901234567890123456789111111"
-);
+const OWNER_PUB_KEY_KEY_HASH =
+  "01234567890123456789012345678901234567890123456789111111";
 
-const MARKETPLACE_ADDRESS = helios.Address.fromBech32(
-  "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw"
-);
+const MARKETPLACE_ADDRESS =
+  "addr_test1qp3n5qrplndc4jjmsmhn59mlmjcvz7xvegcxdv97wxtl8gthwj7fp7cy0tpvdzmd46u3c9tvjfxrpjc2faaqzm43wrpshmp3xw";
 
 const PAYOUT_ADDRESSES = [
   helios.Address.fromHashes(
@@ -39,7 +32,7 @@ const PAYOUT_ADDRESSES = [
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789666661"
     )
-  ),
+  ).toBech32(),
   helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555552"
@@ -47,7 +40,7 @@ const PAYOUT_ADDRESSES = [
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789666662"
     )
-  ),
+  ).toBech32(),
   helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555553"
@@ -55,7 +48,7 @@ const PAYOUT_ADDRESSES = [
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789666663"
     )
-  ),
+  ).toBech32(),
   helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555554"
@@ -63,7 +56,7 @@ const PAYOUT_ADDRESSES = [
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789666664"
     )
-  ),
+  ).toBech32(),
   helios.Address.fromHashes(
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789555555"
@@ -71,7 +64,7 @@ const PAYOUT_ADDRESSES = [
     helios.PubKeyHash.fromHex(
       "01234567890123456789012345678901234567890123456789666665"
     )
-  ),
+  ).toBech32(),
 ];
 
 const minLovelace = 10_000_000n;
@@ -81,8 +74,7 @@ export {
   HANDLE_POLICY_ID,
   MARKETPLACE_ADDRESS,
   minLovelace,
-  ONWER_ADDRESS,
-  OWNER_PUB_KEY_KEY,
+  OWNER_PUB_KEY_KEY_HASH,
   PAYOUT_ADDRESSES,
   SPAM_TOKEN_POLICY_ID,
 };

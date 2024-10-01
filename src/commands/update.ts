@@ -26,10 +26,6 @@ const updateCommand = program
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
-      const address = helios.Address.fromBech32(bech32Address);
-      const newCreatorAddress = helios.Address.fromBech32(
-        newCreatorBech32Address
-      );
       const api = new helios.BlockfrostV0(
         config.network,
         config.blockfrostApiKey
@@ -63,11 +59,11 @@ const updateCommand = program
         handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
         newPayouts: [
           {
-            address,
+            address: bech32Address,
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.9),
           },
           {
-            address: newCreatorAddress,
+            address: newCreatorBech32Address,
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],

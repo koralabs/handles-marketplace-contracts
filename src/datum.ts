@@ -12,21 +12,20 @@ const buildDatumTag = (outputRef: helios.TxOutputId): helios.Datum => {
   );
 };
 
-const buildDatum = (
-  payouts: Payout[],
-  owner: helios.PubKeyHash
-): helios.Datum => {
+const buildDatum = (datum: Datum): helios.Datum => {
   const data = new helios.ListData([
     new helios.ListData(
-      payouts.map(
+      datum.payouts.map(
         (payout) =>
           new helios.ListData([
-            new helios.ByteArrayData(payout.address.bytes),
+            new helios.ByteArrayData(
+              helios.Address.fromBech32(payout.address).bytes
+            ),
             new helios.IntData(payout.amountLovelace),
           ])
       )
     ),
-    new helios.ByteArrayData(owner.bytes),
+    new helios.ByteArrayData(helios.hexToBytes(datum.owner)),
   ]);
   return helios.Datum.inline(data);
 };
@@ -39,10 +38,10 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
     cborString: datumDataCborHex,
   });
 
-  const owner = helios.PubKeyHash.fromHex(decoded[1].slice(2));
+  const owner = helios.PubKeyHash.fromHex(decoded[1].slice(2)).hex;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payouts: Payout[] = decoded[0].map((rawPayout: any) => {
-    const address = helios.Address.fromHex(rawPayout[0].slice(2));
+    const address = helios.Address.fromHex(rawPayout[0].slice(2)).toBech32();
     const amountLovelace = BigInt(rawPayout[1]) as bigint;
     return { address, amountLovelace } as Payout;
   });

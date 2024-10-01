@@ -9,6 +9,16 @@ import { Network } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+/**
+ * Configuration of function to update handle
+ * @interface
+ * @typedef {object} UpdateConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {Payout[]} newPayouts New payouts which is requried to pay when buy this handle
+ * @property {string | undefined} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ */
 interface UpdateConfig {
   changeBech32Address: string;
   cborUtxos: string[];
@@ -17,6 +27,13 @@ interface UpdateConfig {
   refScriptCborUtxo?: string;
 }
 
+/**
+ * Update Handle on marketplace
+ * @param {UpdateConfig} config
+ * @param {Parameters} parameters
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const update = async (
   config: UpdateConfig,
   parameters: Parameters,
@@ -60,7 +77,7 @@ const update = async (
 
   const ownerPubKeyHash = changeAddress.pubKeyHash;
   if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
-  if (datum.owner.toString() != ownerPubKeyHash.toString())
+  if (datum.owner != ownerPubKeyHash.hex)
     return Err(`You must be owner to update`);
 
   /// take fund
@@ -74,7 +91,9 @@ const update = async (
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
   /// build new datum
-  const newDatum = mayFail(() => buildDatum(newPayouts, ownerPubKeyHash));
+  const newDatum = mayFail(() =>
+    buildDatum({ payouts: newPayouts, owner: datum.owner })
+  );
   if (!newDatum.ok) return Err(`Building New Datum error: ${newDatum.error}`);
 
   /// add handle update output
@@ -100,7 +119,7 @@ const update = async (
   }
 
   tx = tx
-    .addSigner(datum.owner) /// sign with owner
+    .addSigner(ownerPubKeyHash) /// sign with owner
     .addOutput(handleUpdateOutput); /// updated handle output
 
   /// finalize tx
