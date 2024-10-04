@@ -1,49 +1,87 @@
-import { buildDatum, decodeDatum } from "./datum";
-import { getNetwork, mayFail, mayFailAsync } from "./helpers";
-import { Parameters, Payout } from "./types";
+import { MIN_FEE } from "./constants";
+import { buildDatum, decodeDatum, decodeParametersDatum } from "./datum";
+import { mayFail, mayFailAsync } from "./helpers";
+import { Payout } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
+import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
+/**
+ * Configuration of function to update handle
+ * @interface
+ * @typedef {object} UpdateConfig
+ * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
+ * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {Payout[]} newPayouts New payouts which is requried to pay when buy this handle
+ * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
+ * @property {string} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ */
+interface UpdateConfig {
+  changeBech32Address: string;
+  cborUtxos: string[];
+  handleCborUtxo: string; /// handle (to update) is in this utxo
+  newPayouts: Payout[];
+  refScriptDetail: ScriptDetails;
+  refScriptCborUtxo: string;
+}
+
+/**
+ * Update Handle on marketplace
+ * @param {UpdateConfig} config
+ * @param {Network} network
+ * @returns {Promise<Result<helios.Tx, string>>}
+ */
 const update = async (
-  blockfrostApiKey: string,
-  address: helios.Address,
-  txHash: string,
-  txIndex: number,
-  newPayouts: Payout[],
-  newOwner: helios.PubKeyHash,
-  parameters: Parameters
+  config: UpdateConfig,
+  network: Network
 ): Promise<Result<helios.Tx, string>> => {
-  const network = getNetwork(blockfrostApiKey);
-  const isTestnet = network != "mainnet";
-  helios.config.set({
-    IS_TESTNET: isTestnet,
-    AUTO_SET_VALIDITY_RANGE: true,
-  });
+  const {
+    changeBech32Address,
+    cborUtxos,
+    handleCborUtxo,
+    newPayouts,
+    refScriptDetail,
+    refScriptCborUtxo,
+  } = config;
+  const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
+  if (!cbor) return Err(`Deploy script cbor is empty`);
+  if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
+  if (!refScriptUtxo) return Err(`Deployed script UTxO is not defined`);
 
-  const api = new helios.BlockfrostV0(network, blockfrostApiKey);
+  /// fetch network parameter
+  const networkParams = fetchNetworkParameters(network);
 
-  const handleUtxoResult = await mayFailAsync(() =>
-    api.getUtxo(new helios.TxOutputId(`${txHash}#${txIndex}`))
+  /// decode parameter
+  const parametersResult = await mayFailAsync(() =>
+    decodeParametersDatum(datumCbor)
   ).complete();
-  if (!handleUtxoResult.ok)
-    return Err(`Getting Handle UTxO error: ${handleUtxoResult.error}`);
-  const handleUtxo = handleUtxoResult.data;
+  if (!parametersResult.ok)
+    return Err(`Deployed script's datum cbor is invalid`);
+  const parameters = parametersResult.data;
 
-  const utxosResult = await mayFailAsync(() =>
-    api.getUtxos(address)
-  ).complete();
-  if (!utxosResult.ok) return Err(`Getting UTxOs error: ${utxosResult.error}`);
-  const utxos = utxosResult.data;
-
+  /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
-    getUplcProgram(parameters)
+    getUplcProgram(parameters, true)
   ).complete();
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
+
+  /// check deployed script cbor hex
+  if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
+    return Err(`Deployed script's cbor doesn't match with its parameter`);
+
+  const changeAddress = helios.Address.fromBech32(changeBech32Address);
+  const utxos = cborUtxos.map((cborUtxo) =>
+    helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
+  );
+  const handleUtxo = helios.TxInput.fromFullCbor([
+    ...Buffer.from(handleCborUtxo, "hex"),
+  ]);
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -54,21 +92,15 @@ const update = async (
     return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
   const datum = datumResult.data;
 
-  /// fetch protocol parameter
-  const networkParamsResult = await mayFailAsync(() =>
-    fetchNetworkParameters(network)
-  ).complete();
-  if (!networkParamsResult.ok)
-    return Err(
-      `Fetching Network Parameter error: ${networkParamsResult.error}`
-    );
-  const networkParams = networkParamsResult.data;
+  const ownerPubKeyHash = changeAddress.pubKeyHash;
+  if (!ownerPubKeyHash) return Err(`Change Address doesn't have payment key`);
+  if (datum.owner != ownerPubKeyHash.hex)
+    return Err(`You must be owner to update`);
 
   /// take fund
-  const minFee = 5_000_000n;
-  const [selected] = helios.CoinSelection.selectLargestFirst(
+  const [selected, unSelected] = helios.CoinSelection.selectLargestFirst(
     utxos,
-    new helios.Value(minFee)
+    new helios.Value(MIN_FEE)
   );
 
   /// redeemer
@@ -76,7 +108,9 @@ const update = async (
   if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
 
   /// build new datum
-  const newDatum = mayFail(() => buildDatum(newPayouts, newOwner));
+  const newDatum = mayFail(() =>
+    buildDatum({ payouts: newPayouts, owner: datum.owner })
+  );
   if (!newDatum.ok) return Err(`Building New Datum error: ${newDatum.error}`);
 
   /// add handle update output
@@ -87,17 +121,22 @@ const update = async (
   );
   handleUpdateOutput.correctLovelace(networkParams);
 
+  /// make ref input
+  const refInput = helios.TxInput.fromFullCbor([
+    ...Buffer.from(refScriptCborUtxo, "hex"),
+  ]);
+
   /// build tx
   const tx = new helios.Tx()
     .addInputs(selected)
     .addInput(handleUtxo, redeemer.data) /// collect handle nft
-    .attachScript(uplcProgram) /// attach spending validator
-    .addSigner(datum.owner) /// sign with owner
+    .addRefInput(refInput, uplcProgram)
+    .addSigner(ownerPubKeyHash) /// sign with owner
     .addOutput(handleUpdateOutput); /// updated handle output
 
   /// finalize tx
   const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, address)
+    tx.finalize(networkParams, changeAddress, unSelected)
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
@@ -105,3 +144,4 @@ const update = async (
 };
 
 export { update };
+export type { UpdateConfig };

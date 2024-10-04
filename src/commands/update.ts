@@ -1,7 +1,7 @@
 import program from "../cli";
 import { loadConfig } from "../config";
-import { invariant } from "../helpers";
-import { update } from "../update";
+import { deployedScripts } from "../deployed";
+import { update, UpdateConfig } from "../update";
 import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
@@ -26,31 +26,46 @@ const updateCommand = program
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
-      const address = helios.Address.fromBech32(bech32Address);
-      const newCreatorAddress = helios.Address.fromBech32(
-        newCreatorBech32Address
+      const api = new helios.BlockfrostV0(
+        config.network,
+        config.blockfrostApiKey
       );
-      invariant(address.pubKeyHash, "Address is invalid");
+      const utxos = await api.getUtxos(
+        helios.Address.fromBech32(bech32Address)
+      );
+      const handleUtxo = await api.getUtxo(
+        new helios.TxOutputId(`${txHash}#${txIndex}`)
+      );
 
-      const txResult = await update(
-        config.blockfrostApiKey,
-        address,
-        txHash,
-        parseInt(txIndex),
-        [
+      const refScriptDetail = Object.values(deployedScripts[config.network])[0];
+      const refScriptUTxo = await api.getUtxo(
+        new helios.TxOutputId(refScriptDetail.refScriptUtxo!)
+      );
+      const refScriptCborUtxo = Buffer.from(
+        refScriptUTxo.toFullCbor()
+      ).toString("hex");
+
+      const updateConfig: UpdateConfig = {
+        changeBech32Address: bech32Address,
+        cborUtxos: utxos.map((utxo) =>
+          Buffer.from(utxo.toFullCbor()).toString("hex")
+        ),
+        handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
+        newPayouts: [
           {
-            address,
+            address: bech32Address,
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.9),
           },
           {
-            address: newCreatorAddress,
+            address: newCreatorBech32Address,
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
-        address.pubKeyHash,
-        config.paramters
-      );
+        refScriptDetail,
+        refScriptCborUtxo,
+      };
 
+      const txResult = await update(updateConfig, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());

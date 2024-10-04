@@ -18,18 +18,21 @@ import {
 } from "@koralabs/kora-labs-contract-testing";
 import fs from "fs/promises";
 
+/// set config
+helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
+
 const runTests = async (file: string) => {
   const walletAddress = await getAddressAtDerivation(0);
   const tester = new ContractTester(walletAddress, false);
   await tester.init();
 
-  /// setup
-  helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
-
   const contractFile = (await fs.readFile(file)).toString();
   const program = helios.Program.new(contractFile); //new instance
-  program.parameters.AUTHORIZERS = [AUTHORIZERS_PUB_KEY_HAHSES[0]];
-  program.parameters.MARKETPLACE_ADDRESS = MARKETPLACE_ADDRESS;
+  program.parameters.AUTHORIZERS = [AUTHORIZERS_PUB_KEY_HAHSES[0]].map((hash) =>
+    helios.PubKeyHash.fromHex(hash)
+  );
+  program.parameters.MARKETPLACE_ADDRESS =
+    helios.Address.fromBech32(MARKETPLACE_ADDRESS);
 
   /// --------------- BUY ---------------
 
@@ -105,7 +108,9 @@ const runTests = async (file: string) => {
     "can buy nft with authorizer",
     new Test(program, async (hash) => {
       const fixture = new BuyFixture(hash);
-      fixture.authorizers = [AUTHORIZERS_PUB_KEY_HAHSES[0]];
+      fixture.authorizers = [AUTHORIZERS_PUB_KEY_HAHSES[0]].map((hash) =>
+        helios.PubKeyHash.fromHex(hash)
+      );
       fixture.spendingUtxoId = getNewFakeUtxoId();
       fixture.datumTag = buildDatumTag(
         new helios.TxOutputId(fixture.spendingUtxoId)
@@ -266,7 +271,9 @@ const runTests = async (file: string) => {
     "can not buy nft with authorizer, if authorizer is not correct",
     new Test(program, async (hash) => {
       const fixture = new BuyFixture(hash);
-      fixture.authorizers = [AUTHORIZERS_PUB_KEY_HAHSES[2]];
+      fixture.authorizers = [AUTHORIZERS_PUB_KEY_HAHSES[2]].map((hash) =>
+        helios.PubKeyHash.fromHex(hash)
+      );
       fixture.spendingUtxoId = getNewFakeUtxoId();
       fixture.datumTag = buildDatumTag(
         new helios.TxOutputId(fixture.spendingUtxoId)
@@ -306,7 +313,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[0], amountLovelace: adaToLovelace(100) },
       ];
 
-      fixture.signatories = [fixture.ownerPubKeyHash];
+      fixture.signatories = [
+        helios.PubKeyHash.fromHex(fixture.ownerPubKeyHash),
+      ];
       return await fixture.initialize();
     })
   );
@@ -347,7 +356,9 @@ const runTests = async (file: string) => {
         { address: PAYOUT_ADDRESSES[2], amountLovelace: adaToLovelace(80) },
       ];
 
-      fixture.signatories = [fixture.ownerPubKeyHash];
+      fixture.signatories = [
+        helios.PubKeyHash.fromHex(fixture.ownerPubKeyHash),
+      ];
       return await fixture.initialize();
     })
   );
