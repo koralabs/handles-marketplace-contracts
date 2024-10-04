@@ -1,11 +1,10 @@
 import { MIN_FEE } from "./constants";
-import { decodeDatum } from "./datum";
+import { decodeDatum, decodeParametersDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
-import { Parameters } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { Network } from "@koralabs/kora-labs-common";
+import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -16,32 +15,49 @@ import { Err, Ok, Result } from "ts-res";
  * @property {string} changeBech32Address Change address of wallet who is performing `list`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
- * @property {string | undefined} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
+ * @property {string} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
  */
 interface WithdrawConfig {
   changeBech32Address: string;
   cborUtxos: string[];
   handleCborUtxo: string; /// handle (to withdraw) is in this utxo
-  refScriptCborUtxo?: string;
+  refScriptDetail: ScriptDetails;
+  refScriptCborUtxo: string;
 }
 
 /**
  * Withdraw Handle from marketplace
  * @param {WithdrawConfig} config
- * @param {Parameters} parameters
  * @param {Network} network
  * @returns {Promise<Result<helios.Tx, string>>}
  */
 const withdraw = async (
   config: WithdrawConfig,
-  parameters: Parameters,
   network: Network
 ): Promise<Result<helios.Tx, string>> => {
-  const { changeBech32Address, cborUtxos, handleCborUtxo, refScriptCborUtxo } =
-    config;
+  const {
+    changeBech32Address,
+    cborUtxos,
+    handleCborUtxo,
+    refScriptDetail,
+    refScriptCborUtxo,
+  } = config;
+  const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
+  if (!cbor) return Err(`Deploy script cbor is empty`);
+  if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
+  if (!refScriptUtxo) return Err(`Deployed script UTxO is not defined`);
 
   /// fetch network parameter
   const networkParams = fetchNetworkParameters(network);
+
+  /// decode parameter
+  const parametersResult = await mayFailAsync(() =>
+    decodeParametersDatum(datumCbor)
+  ).complete();
+  if (!parametersResult.ok)
+    return Err(`Deployed script's datum cbor is invalid`);
+  const parameters = parametersResult.data;
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
@@ -50,6 +66,10 @@ const withdraw = async (
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
+
+  /// check deployed script cbor hex
+  if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
+    return Err(`Deployed script's cbor doesn't match with its parameter`);
 
   const changeAddress = helios.Address.fromBech32(changeBech32Address);
   const utxos = cborUtxos.map((cborUtxo) =>
@@ -90,21 +110,16 @@ const withdraw = async (
   );
   handleWithdrawOutput.correctLovelace(networkParams);
 
+  /// make ref input
+  const refInput = helios.TxInput.fromFullCbor([
+    ...Buffer.from(refScriptCborUtxo, "hex"),
+  ]);
+
   /// build tx
-  let tx = new helios.Tx()
+  const tx = new helios.Tx()
     .addInputs(selected)
-    .addInput(handleUtxo, redeemer.data); /// collect handle nft
-
-  if (refScriptCborUtxo) {
-    const refScriptUtxo = helios.TxInput.fromFullCbor([
-      ...Buffer.from(refScriptCborUtxo, "hex"),
-    ]);
-    tx = tx.addRefInput(refScriptUtxo, uplcProgram);
-  } else {
-    tx = tx.attachScript(uplcProgram);
-  }
-
-  tx = tx
+    .addInput(handleUtxo, redeemer.data) /// collect handle nft
+    .addRefInput(refInput, uplcProgram)
     .addSigner(ownerPubKeyHash) /// sign with owner
     .addOutput(handleWithdrawOutput);
 

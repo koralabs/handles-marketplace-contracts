@@ -30,7 +30,7 @@ const buildDatum = (datum: Datum): helios.Datum => {
   return helios.Datum.inline(data);
 };
 
-const buildParameterDatum = (parameters: Parameters): helios.Datum => {
+const buildParametersDatum = (parameters: Parameters): helios.Datum => {
   const { authorizers, marketplaceAddress } = parameters;
   const data = new helios.ListData([
     new helios.ListData(
@@ -67,4 +67,26 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
   };
 };
 
-export { buildDatum, buildDatumTag, buildParameterDatum, decodeDatum };
+const decodeParametersDatum = async (cbor: string): Promise<Parameters> => {
+  const decoded = await decodeCborToJson({
+    cborString: cbor,
+  });
+
+  const authorizers: string[] = decoded[0].map((item: string) => item.slice(2));
+  const marketplaceAddress = helios.Address.fromHex(
+    decoded[1].slice(2)
+  ).toBech32();
+
+  return {
+    authorizers,
+    marketplaceAddress,
+  };
+};
+
+export {
+  buildDatum,
+  buildDatumTag,
+  buildParametersDatum,
+  decodeDatum,
+  decodeParametersDatum,
+};

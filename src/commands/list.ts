@@ -1,5 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
+import { deployedScripts } from "../deployed";
 import { list, ListConfig } from "../list";
 import { adaToLovelace } from "../utils";
 
@@ -46,9 +47,10 @@ const buyCommand = program
             amountLovelace: adaToLovelace(Number(priceString) * 0.1),
           },
         ],
+        refScriptDetail: Object.values(deployedScripts[config.network])[0],
       };
 
-      const txResult = await list(listConfig, config.paramters, config.network);
+      const txResult = await list(listConfig, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());

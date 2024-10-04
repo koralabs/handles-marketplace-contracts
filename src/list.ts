@@ -1,11 +1,15 @@
 import { HANDLE_POLICY_ID, MIN_LOVELACE } from "./constants";
-import { buildDatum } from "./datum";
+import { buildDatum, decodeParametersDatum } from "./datum";
 import { mayFail, mayFailAsync } from "./helpers";
-import { Parameters, Payout } from "./types";
+import { Payout } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { AssetNameLabel, Network } from "@koralabs/kora-labs-common";
+import {
+  AssetNameLabel,
+  Network,
+  ScriptDetails,
+} from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 /**
@@ -16,30 +20,48 @@ import { Err, Ok, Result } from "ts-res";
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string} handleHex Handle name's hex format
  * @property {Payout[]} payouts Payouts which is requried to pay when buy this handle
+ * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
  */
 interface ListConfig {
   changeBech32Address: string;
   cborUtxos: string[];
   handleHex: string;
   payouts: Payout[];
+  refScriptDetail: ScriptDetails;
 }
 
 /**
  * List Handle to marketplace
  * @param {ListConfig} config
- * @param {Parameters} parameters
  * @param {Network} network
  * @returns {Promise<Result<helios.Tx, string>>}
  */
 const list = async (
   config: ListConfig,
-  parameters: Parameters,
   network: Network
 ): Promise<Result<helios.Tx, string>> => {
-  const { changeBech32Address, cborUtxos, handleHex, payouts } = config;
+  const {
+    changeBech32Address,
+    cborUtxos,
+    handleHex,
+    payouts,
+    refScriptDetail,
+  } = config;
+  const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
+  if (!cbor) return Err(`Deploy script cbor is empty`);
+  if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
+  if (!refScriptUtxo) return Err(`Deployed script UTxO is not defined`);
 
   /// fetch network parameter
   const networkParams = fetchNetworkParameters(network);
+
+  /// decode parameter
+  const parametersResult = await mayFailAsync(() =>
+    decodeParametersDatum(datumCbor)
+  ).complete();
+  if (!parametersResult.ok)
+    return Err(`Deployed script's datum cbor is invalid`);
+  const parameters = parametersResult.data;
 
   /// get uplc program
   const uplcProgramResult = await mayFailAsync(() =>
@@ -48,6 +70,10 @@ const list = async (
   if (!uplcProgramResult.ok)
     return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
   const uplcProgram = uplcProgramResult.data;
+
+  /// check deployed script cbor hex
+  if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
+    return Err(`Deployed script's cbor doesn't match with its parameter`);
 
   const changeAddress = helios.Address.fromBech32(changeBech32Address);
   const utxos = cborUtxos.map((cborUtxo) =>

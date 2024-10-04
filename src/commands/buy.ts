@@ -1,7 +1,7 @@
 import { buy, BuyConfig, buyWithAuth, BuyWithAuthConfig } from "../buy";
 import program from "../cli";
 import { loadConfig } from "../config";
-import { deployedUTxOs } from "../deployed";
+import { deployedScripts } from "../deployed";
 
 import * as helios from "@koralabs/helios";
 
@@ -25,17 +25,13 @@ program
       new helios.TxOutputId(`${txHash}#${txIndex}`)
     );
 
-    let refScriptCborUtxo: string | undefined = undefined;
-    const deployedUTxO = deployedUTxOs[config.network];
-
-    if (deployedUTxO) {
-      const refScriptUTxo = await api.getUtxo(
-        new helios.TxOutputId(`${deployedUTxO.txHash}#${deployedUTxO.txIndex}`)
-      );
-      refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
-        "hex"
-      );
-    }
+    const refScriptDetail = Object.values(deployedScripts[config.network])[0];
+    const refScriptUTxo = await api.getUtxo(
+      new helios.TxOutputId(refScriptDetail.refScriptUtxo!)
+    );
+    const refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
+      "hex"
+    );
 
     const buyConfig: BuyConfig = {
       changeBech32Address: bech32Address,
@@ -43,10 +39,11 @@ program
         Buffer.from(utxo.toFullCbor()).toString("hex")
       ),
       handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
+      refScriptDetail,
       refScriptCborUtxo,
     };
 
-    const txResult = await buy(buyConfig, config.paramters, config.network);
+    const txResult = await buy(buyConfig, config.network);
     if (!txResult.ok) return program.error(txResult.error);
     console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
     console.log(txResult.data.toCborHex());
@@ -72,17 +69,13 @@ program
       new helios.TxOutputId(`${txHash}#${txIndex}`)
     );
 
-    let refScriptCborUtxo: string | undefined = undefined;
-    const deployedUTxO = deployedUTxOs[config.network];
-
-    if (deployedUTxO) {
-      const refScriptUTxo = await api.getUtxo(
-        new helios.TxOutputId(`${deployedUTxO.txHash}#${deployedUTxO.txIndex}`)
-      );
-      refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
-        "hex"
-      );
-    }
+    const refScriptDetail = Object.values(deployedScripts[config.network])[0];
+    const refScriptUTxo = await api.getUtxo(
+      new helios.TxOutputId(refScriptDetail.refScriptUtxo!)
+    );
+    const refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
+      "hex"
+    );
 
     const buyWithAuthConfig: BuyWithAuthConfig = {
       changeBech32Address: bech32Address,
@@ -91,14 +84,11 @@ program
       ),
       handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
       authorizerPubKeyHash: config.paramters.authorizers[0],
+      refScriptDetail,
       refScriptCborUtxo,
     };
 
-    const txResult = await buyWithAuth(
-      buyWithAuthConfig,
-      config.paramters,
-      config.network
-    );
+    const txResult = await buyWithAuth(buyWithAuthConfig, config.network);
     if (!txResult.ok) return program.error(txResult.error);
     console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
     console.log(txResult.data.toCborHex());

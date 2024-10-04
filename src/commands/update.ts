@@ -1,6 +1,6 @@
 import program from "../cli";
 import { loadConfig } from "../config";
-import { deployedUTxOs } from "../deployed";
+import { deployedScripts } from "../deployed";
 import { update, UpdateConfig } from "../update";
 import { adaToLovelace } from "../utils";
 
@@ -37,19 +37,13 @@ const updateCommand = program
         new helios.TxOutputId(`${txHash}#${txIndex}`)
       );
 
-      let refScriptCborUtxo: string | undefined = undefined;
-      const deployedUTxO = deployedUTxOs[config.network];
-
-      if (deployedUTxO) {
-        const refScriptUTxo = await api.getUtxo(
-          new helios.TxOutputId(
-            `${deployedUTxO.txHash}#${deployedUTxO.txIndex}`
-          )
-        );
-        refScriptCborUtxo = Buffer.from(refScriptUTxo.toFullCbor()).toString(
-          "hex"
-        );
-      }
+      const refScriptDetail = Object.values(deployedScripts[config.network])[0];
+      const refScriptUTxo = await api.getUtxo(
+        new helios.TxOutputId(refScriptDetail.refScriptUtxo!)
+      );
+      const refScriptCborUtxo = Buffer.from(
+        refScriptUTxo.toFullCbor()
+      ).toString("hex");
 
       const updateConfig: UpdateConfig = {
         changeBech32Address: bech32Address,
@@ -67,14 +61,11 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
+        refScriptDetail,
         refScriptCborUtxo,
       };
 
-      const txResult = await update(
-        updateConfig,
-        config.paramters,
-        config.network
-      );
+      const txResult = await update(updateConfig, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
       console.log(txResult.data.toCborHex());
