@@ -2,6 +2,7 @@ import { getDirname } from "../helpers";
 import { Parameters } from "../types";
 
 import * as helios from "@koralabs/helios";
+import { Network } from "@koralabs/kora-labs-common";
 import fs from "fs/promises";
 import path from "path";
 
@@ -31,4 +32,23 @@ const getUplcProgram = async (
   return program.compile(optimize);
 };
 
-export { getHeliosProgram, getUplcProgram };
+const getUplcProgramDetail = async (
+  network: Network,
+  parameters: Parameters,
+  optimize: boolean = false
+): Promise<{ cbor: string; hash: string; address: string }> => {
+  const uplcProgram = await getUplcProgram(parameters, optimize);
+  const cbor = helios.bytesToHex(uplcProgram.toCbor());
+  const hash = helios.bytesToHex(uplcProgram.hash());
+  const address = helios.Address.fromHash(
+    helios.PubKeyHash.fromHex(hash),
+    network != "mainnet"
+  ).toBech32();
+  return {
+    cbor,
+    hash,
+    address,
+  };
+};
+
+export { getHeliosProgram, getUplcProgram, getUplcProgramDetail };

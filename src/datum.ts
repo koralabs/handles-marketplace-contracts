@@ -1,5 +1,5 @@
 import { invariant } from "./helpers";
-import { Datum, Payout } from "./types";
+import { Datum, Parameters, Payout } from "./types";
 
 import * as helios from "@koralabs/helios";
 import { decodeCborToJson } from "@koralabs/kora-labs-common";
@@ -30,6 +30,21 @@ const buildDatum = (datum: Datum): helios.Datum => {
   return helios.Datum.inline(data);
 };
 
+const buildParameterDatum = (parameters: Parameters): helios.Datum => {
+  const { authorizers, marketplaceAddress } = parameters;
+  const data = new helios.ListData([
+    new helios.ListData(
+      authorizers.map(
+        (authorizer) => new helios.ByteArrayData(helios.hexToBytes(authorizer))
+      )
+    ),
+    new helios.ByteArrayData(
+      helios.Address.fromBech32(marketplaceAddress).bytes
+    ),
+  ]);
+  return helios.Datum.inline(data);
+};
+
 const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
   const datumDataCborHex = datum.data?.toCborHex();
   invariant(datumDataCborHex, "Datum is invalid");
@@ -52,4 +67,4 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
   };
 };
 
-export { buildDatum, buildDatumTag, decodeDatum };
+export { buildDatum, buildDatumTag, buildParameterDatum, decodeDatum };
