@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "outDir": "./lib"
   },
   "include": ["src/**/*", "src/tests/**/*"],
   "exclude": ["node_modules"]
