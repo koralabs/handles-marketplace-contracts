@@ -1,6 +1,7 @@
 node_modules
 *testingCode.helios
 /contract
+/dist
 test.js
 *.flat
 *.log
@@ -9,3 +10,4 @@ test.js
 *.env
 /dist
 /lib
+.env.*.local

@@ -5,8 +5,7 @@ import { Payout } from "../types";
 import {
   HANDLE_POLICY_ID,
   minLovelace,
-  ONWER_ADDRESS,
-  OWNER_PUB_KEY_KEY,
+  OWNER_PUB_KEY_KEY_HASH,
   SPAM_TOKEN_POLICY_ID,
 } from "./constants";
 
@@ -25,7 +24,7 @@ class BuyFixture extends Fixture {
 
   spendingUtxoId: string = "";
   payouts: Payout[] = [];
-  owner: helios.Address = ONWER_ADDRESS;
+  ownerPubKeyHash: string = OWNER_PUB_KEY_KEY_HASH;
   authorizers: helios.PubKeyHash[] = [];
   datumTag: helios.Datum | null = null;
   payoutOutputs: Payout[] = [];
@@ -36,7 +35,10 @@ class BuyFixture extends Fixture {
 
   async initialize() {
     this.redeemer = Buy(this.payoutOutputsOffset);
-    const datum = buildDatum(this.payouts, this.owner);
+    const datum = buildDatum({
+      payouts: this.payouts,
+      owner: this.ownerPubKeyHash,
+    });
 
     const handleAsset = new helios.Assets([
       [
@@ -85,7 +87,7 @@ class BuyFixture extends Fixture {
     this.outputs = this.payoutOutputs.map(
       (payout, index) =>
         new helios.TxOutput(
-          payout.address,
+          helios.Address.fromBech32(payout.address),
           new helios.Value(payout.amountLovelace),
           index == this.payoutOutputsOffset ? this.datumTag : undefined
         )
@@ -101,10 +103,10 @@ class UpdateFixture extends Fixture {
   handleName = "golddydev";
 
   payouts: Payout[] = [];
-  ownerPubKeyHash: helios.PubKeyHash = OWNER_PUB_KEY_KEY;
+  ownerPubKeyHash: string = OWNER_PUB_KEY_KEY_HASH;
 
   newPayouts: Payout[] = [];
-  newOwnerPubKeyHash = helios.PubKeyHash.fromHex(this.ownerPubKeyHash.hex);
+  newOwnerPubKeyHash: string = this.ownerPubKeyHash;
 
   constructor(validatorHash: helios.ValidatorHash) {
     super(validatorHash);
@@ -112,7 +114,10 @@ class UpdateFixture extends Fixture {
 
   async initialize() {
     this.redeemer = WithdrawOrUpdate();
-    const datum = buildDatum(this.payouts, this.ownerPubKeyHash);
+    const datum = buildDatum({
+      payouts: this.payouts,
+      owner: this.ownerPubKeyHash,
+    });
 
     const handleAsset = new helios.Assets([
       [
@@ -145,7 +150,10 @@ class UpdateFixture extends Fixture {
       ),
     ];
 
-    const newDatum = buildDatum(this.newPayouts, this.newOwnerPubKeyHash);
+    const newDatum = buildDatum({
+      payouts: this.newPayouts,
+      owner: this.newOwnerPubKeyHash,
+    });
     this.outputs = [
       new helios.TxOutput(
         this.scriptAddress,
@@ -162,7 +170,7 @@ class WithdrawFixture extends Fixture {
   handleName = "golddydev";
 
   payouts: Payout[] = [];
-  ownerPubKeyHash: helios.PubKeyHash = OWNER_PUB_KEY_KEY;
+  ownerPubKeyHash: string = OWNER_PUB_KEY_KEY_HASH;
 
   constructor(validatorHash: helios.ValidatorHash) {
     super(validatorHash);
@@ -170,7 +178,10 @@ class WithdrawFixture extends Fixture {
 
   async initialize() {
     this.redeemer = WithdrawOrUpdate();
-    const datum = buildDatum(this.payouts, this.ownerPubKeyHash);
+    const datum = buildDatum({
+      payouts: this.payouts,
+      owner: this.ownerPubKeyHash,
+    });
 
     const handleAsset = new helios.Assets([
       [
