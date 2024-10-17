@@ -14,10 +14,9 @@ const external = [
 export default {
   input: "./src/index.ts",
   output: {
-    file: "index.cjs",
+    file: 'dist/index.cjs', // Specify the output file with directory
     format: "cjs",
     sourcemap: true,
-    dir: "dist", // Specify your desired output directory here
   },
   plugins: [
     resolve(),

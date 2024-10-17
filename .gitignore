@@ -7,3 +7,5 @@ test.js
 *.uplc
 *.txt
 *.env
+/dist
+/lib
