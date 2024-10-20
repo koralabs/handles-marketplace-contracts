@@ -4,6 +4,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import json from "@rollup/plugin-json";
 import { builtinModules } from "module";
 import pkg from "./package.json" assert { type: "json" };
+import copy from 'rollup-plugin-copy';
 
 const external = [
   ...Object.keys(pkg.dependencies || {}),
@@ -24,6 +25,12 @@ export default {
     json(),
     typescript({
       tsconfig: "tsconfig.json",
+    }),
+    copy({
+      targets: [
+        { src: 'src/contract/marketplace.helios', dest: 'dist/contract' },
+        { src: 'src/contract/marketplace.helios', dest: './contract' }
+      ]
     }),
   ],
   external,
