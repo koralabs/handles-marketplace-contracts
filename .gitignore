@@ -8,4 +8,6 @@ test.js
 *.uplc
 *.txt
 *.env
+/dist
+/lib
 .env.*.local
