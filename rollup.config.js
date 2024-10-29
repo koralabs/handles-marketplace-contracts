@@ -1,10 +1,11 @@
-import typescript from "rollup-plugin-typescript2";
-import commonjs from "@rollup/plugin-commonjs";
-import resolve from "@rollup/plugin-node-resolve";
-import json from "@rollup/plugin-json";
-import { builtinModules } from "module";
 import pkg from "./package.json" assert { type: "json" };
-import copy from 'rollup-plugin-copy';
+
+import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
+import resolve from "@rollup/plugin-node-resolve";
+import { builtinModules } from "module";
+import copy from "rollup-plugin-copy";
+import typescript from "rollup-plugin-typescript2";
 
 const external = [
   ...Object.keys(pkg.dependencies || {}),
@@ -15,7 +16,7 @@ const external = [
 export default {
   input: "./src/index.ts",
   output: {
-    file: 'dist/index.cjs', // Specify the output file with directory
+    file: "dist/index.cjs", // Specify the output file with directory
     format: "cjs",
     sourcemap: true,
   },
@@ -28,9 +29,9 @@ export default {
     }),
     copy({
       targets: [
-        { src: 'src/contract/marketplace.helios', dest: 'dist/contract' },
-        { src: 'src/contract/marketplace.helios', dest: './contract' }
-      ]
+        { src: "src/contract/marketplace.helios", dest: "dist/contract" },
+        { src: "src/contract/marketplace.helios", dest: "./contract" },
+      ],
     }),
   ],
   external,
