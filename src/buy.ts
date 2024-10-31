@@ -1,10 +1,16 @@
-import { MIN_FEE, MIN_LOVELACE } from "./constants";
+import { HANDLE_POLICY_ID, MIN_FEE, MIN_LOVELACE } from "./constants";
 import { buildDatumTag, decodeDatum, decodeParametersDatum } from "./datum";
+import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync } from "./helpers";
-import { bigIntMax, fetchNetworkParameters, getUplcProgram } from "./utils";
+import {
+  bigIntMax,
+  fetchLatestmarketplaceScriptDetail,
+  fetchNetworkParameters,
+  getUplcProgram,
+} from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
+import { IUTxO, Network } from "@koralabs/kora-labs-common";
 import { Buy } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -14,16 +20,16 @@ import { Err, Ok, Result } from "ts-res";
  * @typedef {object} BuyConfig
  * @property {string} changeBech32Address Change address of wallet who is performing `list`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
- * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
- * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
- * @property {string} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
+ * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
+ * @property {string} handleHex Handle name's hex format (asset name label is also included)
+ * @property {IUTxO} listingUtxo UTxO where this handle is listed
  */
 interface BuyConfig {
   changeBech32Address: string;
   cborUtxos: string[];
-  handleCborUtxo: string; /// handle (to buy) is in this utxo
-  refScriptDetail: ScriptDetails;
-  refScriptCborUtxo: string;
+  collateralCborUtxo?: string | null;
+  handleHex: string;
+  listingUtxo: IUTxO;
 }
 
 /**
@@ -32,37 +38,43 @@ interface BuyConfig {
  * @typedef {object} BuyWithAuthConfig
  * @property {string} changeBech32Address Change address of wallet who is performing `list`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
- * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
+ * @property {string} handleHex Handle name's hex format (asset name label is also included)
+ * @property {IUTxO} listingUtxo UTxO where this handle is listed
  * @property {string} authorizerPubKeyHash Pub Key Hash of authorizer
- * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
- * @property {string} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
  */
 interface BuyWithAuthConfig {
   changeBech32Address: string;
   cborUtxos: string[];
-  handleCborUtxo: string; /// handle (to buy) is in this utxo
+  collateralCborUtxo?: string | null;
+  handleHex: string;
+  listingUtxo: IUTxO;
   authorizerPubKeyHash: string;
-  refScriptDetail: ScriptDetails;
-  refScriptCborUtxo: string;
 }
 
 /**
  * Buy Handle on marketplace
  * @param {BuyConfig} config
  * @param {Network} network
- * @returns {Promise<Result<helios.Tx, string>>}
+ * @returns {Promise<Result<string, string>>}
  */
+
 const buy = async (
   config: BuyConfig,
   network: Network
-): Promise<Result<helios.Tx, string>> => {
-  const {
-    changeBech32Address,
-    cborUtxos,
-    handleCborUtxo,
-    refScriptDetail,
-    refScriptCborUtxo,
-  } = config;
+): Promise<Result<string, string>> => {
+  const { changeBech32Address, cborUtxos, handleHex, listingUtxo } = config;
+
+  /// fetch marketplace reference script detail
+  const refScriptDetailResult = await mayFailAsync(() =>
+    fetchLatestmarketplaceScriptDetail()
+  ).complete();
+
+  /// use deployed script if fetch is failed
+  const refScriptDetail = refScriptDetailResult.ok
+    ? refScriptDetailResult.data
+    : Object.values(deployedScripts[network])[0];
+
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
   if (!cbor) return Err(`Deploy script cbor is empty`);
   if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
@@ -95,9 +107,24 @@ const buy = async (
   const utxos = cborUtxos.map((cborUtxo) =>
     helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
   );
-  const handleUtxo = helios.TxInput.fromFullCbor([
-    ...Buffer.from(handleCborUtxo, "hex"),
-  ]);
+  const handleUtxo = new helios.TxInput(
+    new helios.TxOutputId(
+      helios.TxId.fromHex(listingUtxo.tx_id),
+      listingUtxo.index
+    ),
+    new helios.TxOutput(
+      helios.Address.fromBech32(listingUtxo.address),
+      new helios.Value(
+        BigInt(listingUtxo.lovelace),
+        new helios.Assets([[HANDLE_POLICY_ID, [[handleHex, 1]]]])
+      ),
+      listingUtxo.datum
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(helios.hexToBytes(listingUtxo.datum))
+          )
+        : null
+    )
+  );
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -157,10 +184,27 @@ const buy = async (
   );
   handleBuyOutput.correctLovelace(networkParams);
 
-  /// make ref input
-  const refInput = helios.TxInput.fromFullCbor([
-    ...Buffer.from(refScriptCborUtxo, "hex"),
-  ]);
+  /// make ref script input
+  const refInput = new helios.TxInput(
+    new helios.TxOutputId(refScriptDetail.refScriptUtxo || ""),
+    new helios.TxOutput(
+      helios.Address.fromBech32(refScriptDetail.refScriptAddress || ""),
+      new helios.Value(
+        BigInt(1),
+        new helios.Assets([
+          [HANDLE_POLICY_ID, [[refScriptDetail.handleHex, 1]]],
+        ])
+      ),
+      refScriptDetail.datumCbor
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(
+              helios.hexToBytes(refScriptDetail.datumCbor)
+            )
+          )
+        : null,
+      helios.UplcProgram.fromCbor(refScriptDetail.cbor || "")
+    )
+  );
 
   /// build tx
   const tx = new helios.Tx()
@@ -177,27 +221,37 @@ const buy = async (
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
-  return Ok(txCompleteResult.data);
+  return Ok(txCompleteResult.data.toCborHex());
 };
 
 /**
  * Buy Handle on marketplace with one of authorizers
  * @param {BuyWithAuthConfig} config
  * @param {Network} network
- * @returns {Promise<Result<helios.Tx, string>>}
+ * @returns {Promise<Result<string, string>>}
  */
 const buyWithAuth = async (
   config: BuyWithAuthConfig,
   network: Network
-): Promise<Result<helios.Tx, string>> => {
+): Promise<Result<string, string>> => {
   const {
     changeBech32Address,
     cborUtxos,
-    handleCborUtxo,
+    handleHex,
+    listingUtxo,
     authorizerPubKeyHash,
-    refScriptDetail,
-    refScriptCborUtxo,
   } = config;
+
+  /// fetch marketplace reference script detail
+  const refScriptDetailResult = await mayFailAsync(() =>
+    fetchLatestmarketplaceScriptDetail()
+  ).complete();
+
+  /// use deployed script if fetch is failed
+  const refScriptDetail = refScriptDetailResult.ok
+    ? refScriptDetailResult.data
+    : Object.values(deployedScripts[network])[0];
+
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
   if (!cbor) return Err(`Deploy script cbor is empty`);
   if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
@@ -238,9 +292,24 @@ const buyWithAuth = async (
   const utxos = cborUtxos.map((cborUtxo) =>
     helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
   );
-  const handleUtxo = helios.TxInput.fromFullCbor([
-    ...Buffer.from(handleCborUtxo, "hex"),
-  ]);
+  const handleUtxo = new helios.TxInput(
+    new helios.TxOutputId(
+      helios.TxId.fromHex(listingUtxo.tx_id),
+      listingUtxo.index
+    ),
+    new helios.TxOutput(
+      helios.Address.fromBech32(listingUtxo.address),
+      new helios.Value(
+        BigInt(listingUtxo.lovelace),
+        new helios.Assets([[HANDLE_POLICY_ID, [[handleHex, 1]]]])
+      ),
+      listingUtxo.datum
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(helios.hexToBytes(listingUtxo.datum))
+          )
+        : null
+    )
+  );
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -290,10 +359,27 @@ const buyWithAuth = async (
   );
   handleBuyOutput.correctLovelace(networkParams);
 
-  /// make ref input
-  const refInput = helios.TxInput.fromFullCbor([
-    ...Buffer.from(refScriptCborUtxo, "hex"),
-  ]);
+  /// make ref script input
+  const refInput = new helios.TxInput(
+    new helios.TxOutputId(refScriptDetail.refScriptUtxo || ""),
+    new helios.TxOutput(
+      helios.Address.fromBech32(refScriptDetail.refScriptAddress || ""),
+      new helios.Value(
+        BigInt(1),
+        new helios.Assets([
+          [HANDLE_POLICY_ID, [[refScriptDetail.handleHex, 1]]],
+        ])
+      ),
+      refScriptDetail.datumCbor
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(
+              helios.hexToBytes(refScriptDetail.datumCbor)
+            )
+          )
+        : null,
+      helios.UplcProgram.fromCbor(refScriptDetail.cbor || "")
+    )
+  );
 
   /// build tx
   const tx = new helios.Tx()
@@ -310,7 +396,7 @@ const buyWithAuth = async (
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
-  return Ok(txCompleteResult.data);
+  return Ok(txCompleteResult.data.toCborHex());
 };
 
 export { buy, buyWithAuth };

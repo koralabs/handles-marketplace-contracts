@@ -1,16 +1,12 @@
-import { get, getNetwork, loadEnv } from "./helpers";
+import { BLOCKFROST_API_KEY } from "./constants";
+import { getNetwork } from "./helpers";
 import { Parameters } from "./types";
 
 import * as helios from "@koralabs/helios";
-import { Err, Ok } from "ts-res";
-
-loadEnv({ path: ".env.preprod.local" });
+import { Ok } from "ts-res";
 
 const loadConfig = () => {
-  const blockfrostApiKey = get("BLOCKFROST_API_KEY", "string");
-  if (!blockfrostApiKey.ok) return Err(blockfrostApiKey.error);
-
-  const network = getNetwork(blockfrostApiKey.data);
+  const network = getNetwork(BLOCKFROST_API_KEY);
 
   /// set config
   helios.config.set({
@@ -30,7 +26,7 @@ const loadConfig = () => {
   };
 
   return Ok({
-    blockfrostApiKey: blockfrostApiKey.data,
+    blockfrostApiKey: BLOCKFROST_API_KEY,
     network,
     paramters,
   });

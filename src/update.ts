@@ -1,11 +1,16 @@
-import { MIN_FEE } from "./constants";
+import { HANDLE_POLICY_ID, MIN_FEE } from "./constants";
 import { buildDatum, decodeDatum, decodeParametersDatum } from "./datum";
+import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Payout } from "./types";
-import { fetchNetworkParameters, getUplcProgram } from "./utils";
+import {
+  fetchLatestmarketplaceScriptDetail,
+  fetchNetworkParameters,
+  getUplcProgram,
+} from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
+import { IUTxO, Network } from "@koralabs/kora-labs-common";
 import { WithdrawOrUpdate } from "redeemer";
 import { Err, Ok, Result } from "ts-res";
 
@@ -15,18 +20,18 @@ import { Err, Ok, Result } from "ts-res";
  * @typedef {object} UpdateConfig
  * @property {string} changeBech32Address Change address of wallet who is performing `list`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
- * @property {string} handleCborUtxo UTxO (cbor format) of handle to buy
+ * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
+ * @property {string} handleHex Handle name's hex format (asset name label is also included)
+ * @property {IUTxO} listingUtxo UTxO where this handle is listed
  * @property {Payout[]} newPayouts New payouts which is requried to pay when buy this handle
- * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
- * @property {string} refScriptCborUtxo UTxO (cbor format) where marketplace contract is deployed
  */
 interface UpdateConfig {
   changeBech32Address: string;
   cborUtxos: string[];
-  handleCborUtxo: string; /// handle (to update) is in this utxo
+  collateralCborUtxo?: string | null;
+  handleHex: string;
+  listingUtxo: IUTxO;
   newPayouts: Payout[];
-  refScriptDetail: ScriptDetails;
-  refScriptCborUtxo: string;
 }
 
 /**
@@ -38,15 +43,20 @@ interface UpdateConfig {
 const update = async (
   config: UpdateConfig,
   network: Network
-): Promise<Result<helios.Tx, string>> => {
-  const {
-    changeBech32Address,
-    cborUtxos,
-    handleCborUtxo,
-    newPayouts,
-    refScriptDetail,
-    refScriptCborUtxo,
-  } = config;
+): Promise<Result<string, string>> => {
+  const { changeBech32Address, cborUtxos, handleHex, listingUtxo, newPayouts } =
+    config;
+
+  /// fetch marketplace reference script detail
+  const refScriptDetailResult = await mayFailAsync(() =>
+    fetchLatestmarketplaceScriptDetail()
+  ).complete();
+
+  /// use deployed script if fetch is failed
+  const refScriptDetail = refScriptDetailResult.ok
+    ? refScriptDetailResult.data
+    : Object.values(deployedScripts[network])[0];
+
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
   if (!cbor) return Err(`Deploy script cbor is empty`);
   if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
@@ -79,9 +89,24 @@ const update = async (
   const utxos = cborUtxos.map((cborUtxo) =>
     helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
   );
-  const handleUtxo = helios.TxInput.fromFullCbor([
-    ...Buffer.from(handleCborUtxo, "hex"),
-  ]);
+  const handleUtxo = new helios.TxInput(
+    new helios.TxOutputId(
+      helios.TxId.fromHex(listingUtxo.tx_id),
+      listingUtxo.index
+    ),
+    new helios.TxOutput(
+      helios.Address.fromBech32(listingUtxo.address),
+      new helios.Value(
+        BigInt(listingUtxo.lovelace),
+        new helios.Assets([[HANDLE_POLICY_ID, [[handleHex, 1]]]])
+      ),
+      listingUtxo.datum
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(helios.hexToBytes(listingUtxo.datum))
+          )
+        : null
+    )
+  );
 
   const handleRawDatum = handleUtxo.output.datum;
   if (!handleRawDatum) return Err("Handle UTxO datum not found");
@@ -122,9 +147,26 @@ const update = async (
   handleUpdateOutput.correctLovelace(networkParams);
 
   /// make ref input
-  const refInput = helios.TxInput.fromFullCbor([
-    ...Buffer.from(refScriptCborUtxo, "hex"),
-  ]);
+  const refInput = new helios.TxInput(
+    new helios.TxOutputId(refScriptDetail.refScriptUtxo || ""),
+    new helios.TxOutput(
+      helios.Address.fromBech32(refScriptDetail.refScriptAddress || ""),
+      new helios.Value(
+        BigInt(1),
+        new helios.Assets([
+          [HANDLE_POLICY_ID, [[refScriptDetail.handleHex, 1]]],
+        ])
+      ),
+      refScriptDetail.datumCbor
+        ? helios.Datum.inline(
+            helios.UplcData.fromCbor(
+              helios.hexToBytes(refScriptDetail.datumCbor)
+            )
+          )
+        : null,
+      helios.UplcProgram.fromCbor(refScriptDetail.cbor || "")
+    )
+  );
 
   /// build tx
   const tx = new helios.Tx()
@@ -140,7 +182,7 @@ const update = async (
   ).complete();
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
-  return Ok(txCompleteResult.data);
+  return Ok(txCompleteResult.data.toCborHex());
 };
 
 export { update };

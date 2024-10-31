@@ -1,10 +1,10 @@
 import program from "../cli";
 import { loadConfig } from "../config";
-import { deployedScripts } from "../deployed";
 import { list, ListConfig } from "../list";
 import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
+import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 const buyCommand = program
   .command("list")
@@ -36,7 +36,10 @@ const buyCommand = program
         cborUtxos: utxos.map((utxo) =>
           Buffer.from(utxo.toFullCbor()).toString("hex")
         ),
-        handleHex: Buffer.from(handleName, "utf8").toString("hex"),
+        handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(
+          handleName,
+          "utf8"
+        ).toString("hex")}`,
         payouts: [
           {
             address: bech32Address,
@@ -47,13 +50,12 @@ const buyCommand = program
             amountLovelace: adaToLovelace(Number(priceString) * 0.1),
           },
         ],
-        refScriptDetail: Object.values(deployedScripts[config.network])[0],
       };
 
       const txResult = await list(listConfig, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
-      console.log(txResult.data.toCborHex());
+      console.log(txResult.data);
     }
   );
 

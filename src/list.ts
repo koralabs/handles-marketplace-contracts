@@ -1,11 +1,16 @@
 import { HANDLE_POLICY_ID, MIN_LOVELACE } from "./constants";
 import { buildDatum, decodeParametersDatum } from "./datum";
+import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync } from "./helpers";
 import { Payout } from "./types";
-import { fetchNetworkParameters, getUplcProgram } from "./utils";
+import {
+  fetchLatestmarketplaceScriptDetail,
+  fetchNetworkParameters,
+  getUplcProgram,
+} from "./utils";
 
 import * as helios from "@koralabs/helios";
-import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
+import { Network } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 /**
@@ -16,33 +21,35 @@ import { Err, Ok, Result } from "ts-res";
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string} handleHex Handle name's hex format (asset name label is also included)
  * @property {Payout[]} payouts Payouts which is requried to pay when buy this handle
- * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
  */
 interface ListConfig {
   changeBech32Address: string;
   cborUtxos: string[];
   handleHex: string;
   payouts: Payout[];
-  refScriptDetail: ScriptDetails;
 }
 
 /**
  * List Handle to marketplace
  * @param {ListConfig} config
  * @param {Network} network
- * @returns {Promise<Result<helios.Tx, string>>}
+ * @returns {Promise<Result<string, string>>}
  */
 const list = async (
   config: ListConfig,
   network: Network
-): Promise<Result<helios.Tx, string>> => {
-  const {
-    changeBech32Address,
-    cborUtxos,
-    handleHex,
-    payouts,
-    refScriptDetail,
-  } = config;
+): Promise<Result<string, string>> => {
+  const { changeBech32Address, cborUtxos, handleHex, payouts } = config;
+
+  /// fetch marketplace reference script detail
+  const refScriptDetailResult = await mayFailAsync(() =>
+    fetchLatestmarketplaceScriptDetail()
+  ).complete();
+
+  /// use deployed script if fetch is failed
+  const refScriptDetail = refScriptDetailResult.ok
+    ? refScriptDetailResult.data
+    : Object.values(deployedScripts[network])[0];
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
   if (!cbor) return Err(`Deploy script cbor is empty`);
   if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
@@ -112,7 +119,7 @@ const list = async (
   if (!txCompleteResult.ok)
     return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
 
-  return Ok(txCompleteResult.data);
+  return Ok(txCompleteResult.data.toCborHex());
 };
 
 export { list };

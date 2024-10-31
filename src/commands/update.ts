@@ -1,15 +1,16 @@
 import program from "../cli";
 import { loadConfig } from "../config";
-import { deployedScripts } from "../deployed";
 import { update, UpdateConfig } from "../update";
 import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
+import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 const updateCommand = program
   .command("update")
   .description("Update Handle NFT on Marketplace")
   .argument("<address>", "Address to perform update")
+  .argument("<handle-name>", "Ada Handle Name to buy on marketplace")
   .argument("<utxo-tx-hash>", "Transaction Hash of UTxO where handle is")
   .argument("<utxo-tx-index>", "Transaction Index of UTxO where handle is")
   .argument("<new-price>", "New Price in ada")
@@ -17,6 +18,7 @@ const updateCommand = program
   .action(
     async (
       bech32Address: string,
+      handleName: string,
       txHash: string,
       txIndex: string,
       newPriceString: string,
@@ -37,20 +39,22 @@ const updateCommand = program
         new helios.TxOutputId(`${txHash}#${txIndex}`)
       );
 
-      const refScriptDetail = Object.values(deployedScripts[config.network])[0];
-      const refScriptUTxo = await api.getUtxo(
-        new helios.TxOutputId(refScriptDetail.refScriptUtxo!)
-      );
-      const refScriptCborUtxo = Buffer.from(
-        refScriptUTxo.toFullCbor()
-      ).toString("hex");
-
       const updateConfig: UpdateConfig = {
         changeBech32Address: bech32Address,
         cborUtxos: utxos.map((utxo) =>
           Buffer.from(utxo.toFullCbor()).toString("hex")
         ),
-        handleCborUtxo: Buffer.from(handleUtxo.toFullCbor()).toString("hex"),
+        handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(
+          handleName,
+          "utf8"
+        ).toString("hex")}`,
+        listingUtxo: {
+          address: handleUtxo.address.toBech32(),
+          datum: handleUtxo.output.datum?.data?.toCborHex() || "",
+          index: handleUtxo.outputId.utxoIdx,
+          tx_id: handleUtxo.outputId.txId.hex,
+          lovelace: Number(handleUtxo.value.lovelace),
+        },
         newPayouts: [
           {
             address: bech32Address,
@@ -61,14 +65,12 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
-        refScriptDetail,
-        refScriptCborUtxo,
       };
 
       const txResult = await update(updateConfig, config.network);
       if (!txResult.ok) return program.error(txResult.error);
       console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
-      console.log(txResult.data.toCborHex());
+      console.log(txResult.data);
     }
   );
 

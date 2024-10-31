@@ -9,7 +9,7 @@
     "build": "rm -rf ./dist && rollup -c",
     "prettier": "npx prettier -w '**/*.{js,ts,json,.*}'",
     "lint": "concurrently \"npx prettier --check '**/*.{js,ts,json,.*}'\" \"npx eslint . --max-warnings=0\"",
-    "test": "tsx -r dotenv/config src/tests/tx.test.ts"
+    "test": "tsx -r dotenv/config src/tests/tx.test.ts dotenv_config_path=.env.preprod.local"
   },
   "bin": {
     "marketplace": "./bin/marketplace"
@@ -45,6 +45,7 @@
   "dependencies": {
     "app-root-path": "^3.1.0",
     "commander": "^12.1.0",
+    "cross-fetch": "^4.0.0",
     "decimal.js": "^10.4.3",
     "ts-res": "^1.1.1"
   }
