@@ -1,7 +1,7 @@
 import { HANDLE_POLICY_ID, MIN_FEE } from "./constants";
 import { decodeDatum, decodeParametersDatum } from "./datum";
 import { deployedScripts } from "./deployed";
-import { mayFail, mayFailAsync } from "./helpers";
+import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
 import {
   fetchLatestmarketplaceScriptDetail,
   fetchNetworkParameters,
@@ -166,11 +166,11 @@ const withdraw = async (
     .addOutput(handleWithdrawOutput);
 
   /// finalize tx
-  const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, changeAddress, unSelected)
+  const txCompleteResult = await mayFailTransaction(
+    () => tx.finalize(networkParams, changeAddress, unSelected),
+    refScriptDetail.unoptimizedCbor
   ).complete();
-  if (!txCompleteResult.ok)
-    return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
+  if (!txCompleteResult.ok) return Err(txCompleteResult.error);
   return Ok(txCompleteResult.data.toCborHex());
 };
 

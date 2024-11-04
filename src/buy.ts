@@ -1,7 +1,7 @@
 import { HANDLE_POLICY_ID, MIN_FEE, MIN_LOVELACE } from "./constants";
 import { buildDatumTag, decodeDatum, decodeParametersDatum } from "./datum";
 import { deployedScripts } from "./deployed";
-import { mayFail, mayFailAsync } from "./helpers";
+import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
 import {
   bigIntMax,
   fetchLatestmarketplaceScriptDetail,
@@ -216,11 +216,11 @@ const buy = async (
     .addOutput(handleBuyOutput);
 
   /// finalize tx
-  const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, changeAddress, unSelected)
+  const txCompleteResult = await mayFailTransaction(
+    () => tx.finalize(networkParams, changeAddress, unSelected),
+    refScriptDetail.unoptimizedCbor
   ).complete();
-  if (!txCompleteResult.ok)
-    return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
+  if (!txCompleteResult.ok) return Err(txCompleteResult.error);
   return Ok(txCompleteResult.data.toCborHex());
 };
 
@@ -391,11 +391,11 @@ const buyWithAuth = async (
     .addSigner(helios.PubKeyHash.fromHex(authorizerPubKeyHash));
 
   /// finalize tx
-  const txCompleteResult = await mayFailAsync(() =>
-    tx.finalize(networkParams, changeAddress, unSelected)
+  const txCompleteResult = await mayFailTransaction(
+    () => tx.finalize(networkParams, changeAddress, unSelected),
+    refScriptDetail.unoptimizedCbor
   ).complete();
-  if (!txCompleteResult.ok)
-    return Err(`Finalizing Tx error: ${txCompleteResult.error}`);
+  if (!txCompleteResult.ok) return Err(txCompleteResult.error);
   return Ok(txCompleteResult.data.toCborHex());
 };
 
