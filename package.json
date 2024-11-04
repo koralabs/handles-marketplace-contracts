@@ -6,10 +6,10 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
-    "build": "rm -rf ./dist && rollup -c",
+    "build": "tsup",
     "prettier": "npx prettier -w '**/*.{js,ts,json,.*}'",
     "lint": "concurrently \"npx prettier --check '**/*.{js,ts,json,.*}'\" \"npx eslint . --max-warnings=0\"",
-    "test": "tsx -r dotenv/config src/tests/tx.test.ts dotenv_config_path=.env.preprod.local"
+    "test": "tsx -r dotenv/config src/tests/tx.test.ts"
   },
   "bin": {
     "marketplace": "./bin/marketplace"
@@ -21,9 +21,6 @@
     "@koralabs/helios": "0.16.8-2",
     "@koralabs/kora-labs-common": "^5.1.8",
     "@koralabs/kora-labs-contract-testing": "0.0.9",
-    "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
     "@types/node": "^22.1.0",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
@@ -36,9 +33,7 @@
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^2.8.8",
-    "rollup": "^4.24.0",
-    "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-typescript2": "^0.36.0",
+    "tsup": "^8.3.5",
     "tsx": "^4.17.0",
     "typescript": "^5.6.3"
   },
