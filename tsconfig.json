@@ -14,8 +14,8 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "resolveJsonModule": true,
-    "outDir": "dist"
+    "outDir": "./lib"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "lib"]
 }
