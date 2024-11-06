@@ -1,9 +1,13 @@
 node_modules
 *testingCode.helios
 /contract
+/dist
 test.js
 *.flat
 *.log
 *.uplc
 *.txt
 *.env
+/dist
+/lib
+.env.*.local
