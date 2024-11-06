@@ -5,11 +5,7 @@ import { Payout } from "./types";
 import { fetchNetworkParameters, getUplcProgram } from "./utils";
 
 import * as helios from "@koralabs/helios";
-import {
-  AssetNameLabel,
-  Network,
-  ScriptDetails,
-} from "@koralabs/kora-labs-common";
+import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 /**
@@ -18,7 +14,7 @@ import { Err, Ok, Result } from "ts-res";
  * @typedef {object} ListConfig
  * @property {string} changeBech32Address Change address of wallet who is performing `list`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
- * @property {string} handleHex Handle name's hex format
+ * @property {string} handleHex Handle name's hex format (asset name label is also included)
  * @property {Payout[]} payouts Payouts which is requried to pay when buy this handle
  * @property {ScriptDetails} refScriptDetail Deployed marketplace contract detail
  */
@@ -82,7 +78,7 @@ const list = async (
 
   /// take fund and handle asset
   const handleAsset = new helios.Assets([
-    [HANDLE_POLICY_ID, [[`${AssetNameLabel.LBL_222}${handleHex}`, 1]]],
+    [HANDLE_POLICY_ID, [[`${handleHex}`, 1]]],
   ]);
   const minValue = new helios.Value(MIN_LOVELACE, handleAsset);
   const selectResult = mayFail(() =>
