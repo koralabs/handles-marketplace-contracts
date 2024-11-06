@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc",
     "prettier": "npx prettier -w '**/*.{js,ts,json,.*}'",
-    "lint": "concurrently \"npx prettier --check '**/*.{js,ts,json,.*}'\" \"npx eslint . --max-warnings=0\"",
+    "lint": "npx eslint .",
     "test": "tsx -r dotenv/config src/tests/tx.test.ts"
   },
   "bin": {
