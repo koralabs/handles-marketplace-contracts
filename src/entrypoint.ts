@@ -1,5 +1,5 @@
 import program from "./cli";
-import { getDirname, loadEnv } from "./helpers";
+import { getDirname } from "./helpers";
 
 import fs from "fs/promises";
 import path from "path";
@@ -23,7 +23,6 @@ const loadCommands = async (directory: string) => {
 };
 
 const run = async () => {
-  loadEnv();
   await loadCommands(commandsDir);
 
   try {

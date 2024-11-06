@@ -1,8 +1,8 @@
-import { getDirname } from "../helpers";
+import { fetchApi, getDirname } from "../helpers";
 import { Parameters } from "../types";
 
 import * as helios from "@koralabs/helios";
-import { Network } from "@koralabs/kora-labs-common";
+import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
 import fs from "fs/promises";
 import path from "path";
 
@@ -51,4 +51,23 @@ const getUplcProgramDetail = async (
   };
 };
 
-export { getHeliosProgram, getUplcProgram, getUplcProgramDetail };
+const fetchLatestmarketplaceScriptDetail = async (): Promise<ScriptDetails> => {
+  const result = await fetchApi(
+    `scripts?latest=true&type=marketplace_contract`
+  );
+
+  if (!result.ok) {
+    const error = await result.json();
+    throw new Error(error?.message || String(error));
+  }
+
+  const data = (await result.json()) as unknown as ScriptDetails;
+  return data;
+};
+
+export {
+  fetchLatestmarketplaceScriptDetail,
+  getHeliosProgram,
+  getUplcProgram,
+  getUplcProgramDetail,
+};
