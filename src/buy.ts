@@ -2,6 +2,7 @@ import { HANDLE_POLICY_ID, MIN_FEE, MIN_LOVELACE } from "./constants";
 import { buildDatumTag, decodeDatum, decodeParametersDatum } from "./datum";
 import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
+import { Buy } from "./redeemer";
 import { BuildTxError, SuccessResult } from "./types";
 import {
   bigIntMax,
@@ -12,7 +13,6 @@ import {
 
 import * as helios from "@koralabs/helios";
 import { IUTxO, Network } from "@koralabs/kora-labs-common";
-import { Buy } from "redeemer";
 import { Err, Result } from "ts-res";
 
 /**

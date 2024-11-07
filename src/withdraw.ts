@@ -2,6 +2,7 @@ import { HANDLE_POLICY_ID, MIN_FEE } from "./constants";
 import { decodeDatum, decodeParametersDatum } from "./datum";
 import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
+import { WithdrawOrUpdate } from "./redeemer";
 import { BuildTxError, SuccessResult } from "./types";
 import {
   fetchLatestmarketplaceScriptDetail,
@@ -11,7 +12,6 @@ import {
 
 import * as helios from "@koralabs/helios";
 import { IUTxO, Network } from "@koralabs/kora-labs-common";
-import { WithdrawOrUpdate } from "redeemer";
 import { Err, Result } from "ts-res";
 
 /**
