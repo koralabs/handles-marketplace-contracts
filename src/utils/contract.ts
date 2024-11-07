@@ -1,9 +1,9 @@
+import { marketplaceContract } from "../contract/marketplace.helios";
 import { fetchApi } from "../helpers";
 import { Parameters } from "../types";
 
 import * as helios from "@koralabs/helios";
 import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
-import { marketplaceContract } from "contract/marketplace.helios";
 
 const getHeliosProgram = async (
   parameters: Parameters

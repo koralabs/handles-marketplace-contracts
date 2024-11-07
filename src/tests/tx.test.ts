@@ -1,3 +1,4 @@
+import { marketplaceContract } from "../contract/marketplace.helios";
 import { buildDatumTag } from "../datum";
 import { adaToLovelace } from "../utils";
 
@@ -16,7 +17,6 @@ import {
   getNewFakeUtxoId,
   Test,
 } from "@koralabs/kora-labs-contract-testing";
-import { marketplaceContract } from "contract/marketplace.helios";
 
 /// set config
 helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
