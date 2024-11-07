@@ -1,5 +1,5 @@
-import { buy, BuyConfig, buyWithAuth, BuyWithAuthConfig } from "../buy";
 import program from "../../cli/cli";
+import { buy, BuyConfig, buyWithAuth, BuyWithAuthConfig } from "../buy";
 import { loadConfig } from "../config";
 
 import * as helios from "@koralabs/helios";
