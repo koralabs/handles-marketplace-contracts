@@ -104,7 +104,10 @@ const list = async (
 
   /// ada handle list update
   const handleListOutput = new helios.TxOutput(
-    helios.Address.fromHashes(uplcProgram.validatorHash, changeAddress.stakingHash),
+    helios.Address.fromHashes(
+      uplcProgram.validatorHash,
+      changeAddress.stakingHash
+    ),
     new helios.Value(0n, handleAsset),
     datum.data
   );
