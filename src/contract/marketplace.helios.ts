@@ -1,3 +1,4 @@
+export const marketplaceContract = `
 spending marketplace
 
 // ---------- Datum ----------
@@ -5,7 +6,7 @@ spending marketplace
 // A listing requires a datum that has
 // the owner's payment key and a list of payouts.
 // We do not need to specify the marketplace payout
-// in `payouts` even though it will be in
+// in 'payouts' even though it will be in
 // one of the outputs.
 
 struct Payout {
@@ -27,7 +28,7 @@ struct Datum {
 /// A user can either buy a token
 /// or cancel/update the listing.
 enum Redeemer {
-    /// `payout_outputs_offset` tells us where
+    /// 'payout_outputs_offset' tells us where
     /// the outputs containing the payouts start.
     Buy {
         payout_outputs_offset: Int 
@@ -64,7 +65,7 @@ func check_payouts_aux(outputs: []TxOutput, payouts: []Payout) -> Int {
   
     Payout { payout_address, amount_lovelace } = payout;
   
-    // The `Output` address must match
+    // The 'Output' address must match
     // the address specified in the corresponding
     // payout from the datum.
     assert(Address::from_bytes(payout_address) == first_output.address, "Output address must be matched with payout");
@@ -110,7 +111,7 @@ func check_payouts(outputs: []TxOutput, payouts: []Payout, datum_tag: OutputDatu
     rest_payouts: []Payout = payouts.tail;
     Payout { payout_address, amount_lovelace } = payout;
 
-    // The `Output` address must match
+    // The 'Output' address must match
     // the address specified in the corresponding
     // payout from the datum.
     assert(Address::from_bytes(payout_address) == first_output.address, "First output address must be matched with payout");
@@ -143,10 +144,10 @@ func check_payouts(outputs: []TxOutput, payouts: []Payout, datum_tag: OutputDatu
 
 /// This function is used only if a discount
 /// is not allowed (tx not signed by jpg). The main difference
-/// from `check_payouts` is that we make sure the
+/// from 'check_payouts' is that we make sure the
 /// output address matches a hardcoded marketplace address
 /// along with confirming that the output value equals
-/// the marketplace_fee. In this case there is no `Payout`
+/// the marketplace_fee. In this case there is no 'Payout'
 /// to compare to.
 func check_marketplace_payout(output: TxOutput, marketplace_fee: Int, datum_tag: OutputDatum) -> Bool {
     assert(output.datum == datum_tag, "Marketplace fee output's datum must be match datum tag");
@@ -179,7 +180,7 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
             datum_tag: OutputDatum::Inline = OutputDatum::new_inline(spending_output_ref.serialize().blake2b());
 
             Datum { payouts, _ } = datum;
-            // Find the `outputs` that correspond to `payouts`.
+            // Find the 'outputs' that correspond to 'payouts'.
             payout_outputs: []TxOutput = find_payout_outputs(tx.outputs, payout_outputs_offset);
 
             // We can ignore the fee check
@@ -188,13 +189,13 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
                 tx.is_signed_by(authorizer)
             });
 
-            // If `can_have_discount` is `True` then we can
+            // If 'can_have_discount' is 'True' then we can
             // assume that jpg properly calculated the fee off chain.
             if (can_have_discount) {
                 check_payouts(payout_outputs, payouts, datum_tag) > 0
             } else {
                 // When there is a marketplace fee we can assume
-                // it is the first of the `payout_outputs`.
+                // it is the first of the 'payout_outputs'.
                 marketplace_output: TxOutput = payout_outputs.head;
                 rest_outputs: []TxOutput = payout_outputs.tail;
       
@@ -219,3 +220,4 @@ func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
         }
     }
 }
+`;

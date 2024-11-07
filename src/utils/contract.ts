@@ -1,19 +1,14 @@
-import { fetchApi, getDirname } from "../helpers";
+import { fetchApi } from "../helpers";
 import { Parameters } from "../types";
 
 import * as helios from "@koralabs/helios";
 import { Network, ScriptDetails } from "@koralabs/kora-labs-common";
-import fs from "fs/promises";
-import path from "path";
-
-const dirname = getDirname(import.meta.url);
-const contractPath = path.join(dirname, "../contract/marketplace.helios");
+import { marketplaceContract } from "contract/marketplace.helios";
 
 const getHeliosProgram = async (
   parameters: Parameters
 ): Promise<helios.Program> => {
-  const contractFile = (await fs.readFile(contractPath)).toString();
-  const program = helios.Program.new(contractFile);
+  const program = helios.Program.new(marketplaceContract);
   program.parameters.AUTHORIZERS = parameters.authorizers.map((authorizer) =>
     helios.PubKeyHash.fromHex(authorizer)
   );
