@@ -1,4 +1,4 @@
-import { packageJson } from "./helpers";
+import { packageJson } from "./file";
 
 import { Command } from "commander";
 

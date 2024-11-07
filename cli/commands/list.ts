@@ -1,4 +1,4 @@
-import program from "../cli";
+import program from "../../cli/cli";
 import { loadConfig } from "../config";
 import { list, ListConfig } from "../list";
 import { adaToLovelace } from "../utils";

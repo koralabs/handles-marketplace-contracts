@@ -1,6 +1,6 @@
 {
   "name": "@koralabs/handles-marketplace-contracts",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Smart Contract of Ada Handles Marketplace",
   "type": "module",
   "main": "index.js",

@@ -1,5 +1,5 @@
 import program from "./cli";
-import { getDirname } from "./helpers";
+import { getDirname } from "./file";
 
 import fs from "fs/promises";
 import path from "path";

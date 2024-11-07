@@ -1,6 +1,7 @@
-import program from "../cli";
-import { loadConfig } from "../config";
-import { withdraw, WithdrawConfig } from "../withdraw";
+import { loadConfig } from "../../src/config";
+import { withdraw, WithdrawConfig } from "../../src/withdraw";
+
+import program from "./cli";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";

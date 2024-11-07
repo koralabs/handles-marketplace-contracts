@@ -1,7 +1,7 @@
+import { loadConfig } from "../../src/config";
+import { update, UpdateConfig } from "../../src/update";
+import { adaToLovelace } from "../../src/utils";
 import program from "../cli";
-import { loadConfig } from "../config";
-import { update, UpdateConfig } from "../update";
-import { adaToLovelace } from "../utils";
 
 import * as helios from "@koralabs/helios";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
