@@ -16,18 +16,17 @@ import {
   getNewFakeUtxoId,
   Test,
 } from "@koralabs/kora-labs-contract-testing";
-import fs from "fs/promises";
+import { marketplaceContract } from "contract/marketplace.helios";
 
 /// set config
 helios.config.set({ IS_TESTNET: true, AUTO_SET_VALIDITY_RANGE: true });
 
-const runTests = async (file: string) => {
+const runTests = async () => {
   const walletAddress = await getAddressAtDerivation(0);
   const tester = new ContractTester(walletAddress, false);
   await tester.init();
 
-  const contractFile = (await fs.readFile(file)).toString();
-  const program = helios.Program.new(contractFile); //new instance
+  const program = helios.Program.new(marketplaceContract); //new instance
   program.parameters.AUTHORIZERS = [AUTHORIZERS_PUB_KEY_HAHSES[0]].map((hash) =>
     helios.PubKeyHash.fromHex(hash)
   );
@@ -385,5 +384,5 @@ const runTests = async (file: string) => {
 };
 
 (async () => {
-  await runTests("src/contract/marketplace.helios");
+  await runTests();
 })();
