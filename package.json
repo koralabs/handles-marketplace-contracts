@@ -1,14 +1,19 @@
 {
-  "name": "handles-marketplace-contracts",
-  "version": "1.0.0",
+  "name": "@koralabs/handles-marketplace-contracts",
+  "version": "0.1.1",
   "description": "Smart Contract of Ada Handles Marketplace",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
+  "main": "index.js",
+  "module": "index.js",
+  "homepage": "https://github.com/koralabs/handles-marketplace-contracts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koralabs/handles-marketplace-contracts.git"
+  },
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "prettier": "npx prettier -w '**/*.{js,ts,json,.*}'",
-    "lint": "concurrently \"npx prettier --check '**/*.{js,ts,json,.*}'\" \"npx eslint . --max-warnings=0\"",
+    "lint": "npx eslint .",
     "test": "tsx -r dotenv/config src/tests/tx.test.ts"
   },
   "bin": {
@@ -33,7 +38,6 @@
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^2.8.8",
-    "tsup": "^8.3.5",
     "tsx": "^4.17.0",
     "typescript": "^5.6.3"
   },
