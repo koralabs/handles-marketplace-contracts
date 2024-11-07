@@ -54,7 +54,6 @@ const decodeDatum = async (datum: helios.Datum): Promise<Datum> => {
   });
 
   const owner = helios.PubKeyHash.fromHex(decoded[1].slice(2)).hex;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payouts: Payout[] = decoded[0].map((rawPayout: any) => {
     const address = helios.Address.fromHex(rawPayout[0].slice(2)).toBech32();
     const amountLovelace = BigInt(rawPayout[1]) as bigint;

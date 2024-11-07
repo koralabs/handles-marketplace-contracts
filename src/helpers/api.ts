@@ -9,7 +9,6 @@ import { fetch } from "cross-fetch";
 
 const fetchApi = async (
   endpoint: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any = {}
 ): Promise<Response> => {
   const { headers, ...rest } = params;
@@ -31,7 +30,6 @@ const fetchApi = async (
 
 const fetchApiJson = async <T>(
   endpoint: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any = {}
 ): Promise<T> => {
   params.headers = {

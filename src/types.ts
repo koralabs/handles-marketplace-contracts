@@ -1,3 +1,5 @@
+import * as helios from "@koralabs/helios";
+
 /**
  * Parameters for marketplace contract
  * @interface
@@ -34,4 +36,42 @@ interface Datum {
   owner: string;
 }
 
-export type { Datum, Parameters, Payout };
+class BuildTxError extends Error {
+  code: number;
+  failedTxCbor: string;
+  failedTxJson: object;
+
+  static fromError(error: Error, failedTx: helios.Tx) {
+    const err = new BuildTxError(
+      error.message,
+      failedTx.toCborHex(),
+      failedTx.dump()
+    );
+    err.stack = error.stack;
+    err.cause = error.cause;
+    return err;
+  }
+
+  constructor(message: string, failedTxCbor: string, failedTxJson: object) {
+    super(message);
+    this.name = "BuildTxError";
+    this.code = 500;
+    this.failedTxCbor = failedTxCbor;
+    this.failedTxJson = failedTxJson;
+  }
+}
+
+/**
+ * SuccessResult - attached to handles listed on marketplace
+ * @interface
+ * @typedef {object} SuccessResult
+ * @property {string} cbor CBOR Hex of transaction, you can sign and submit
+ * @property {any} dump Transaction's Dump
+ */
+interface SuccessResult {
+  cbor: string;
+  dump: any;
+}
+
+export type { Datum, Parameters, Payout, SuccessResult };
+export { BuildTxError };

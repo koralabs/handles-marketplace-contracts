@@ -1,13 +1,13 @@
-import convertError from "./convert";
+import { BuildTxError, SuccessResult } from "../../types";
 
 import * as helios from "@koralabs/helios";
 import { Err, Ok, Result } from "ts-res";
 
 type Callback = () => Promise<helios.Tx>;
-type ErrType = string | Error | void | undefined;
+type ErrType = string | Error | BuildTxError | void | undefined;
 type HandleableResult<E extends ErrType> = {
   handle: (handler: (e: E) => void) => HandleableResult<E>;
-  complete: () => Promise<Result<helios.Tx, E>>;
+  complete: () => Promise<Result<SuccessResult, E>>;
 };
 
 const buildRefScriptUplcProgram = (cbor: string) => {
@@ -28,18 +28,21 @@ const buildRefScriptUplcProgram = (cbor: string) => {
 };
 
 const mayFailTransaction = (
+  tx: helios.Tx,
   callback: Callback,
   unoptimzedScriptCbor?: string
-): HandleableResult<string> => {
+): HandleableResult<Error | BuildTxError> => {
   const createHandleable = (
-    handler: (e: string) => void
-  ): HandleableResult<string> => {
+    handler: (e: Error) => void
+  ): HandleableResult<Error | BuildTxError> => {
     return {
       handle: (handler) => createHandleable(handler),
-      complete: async (): Promise<Result<helios.Tx, string>> => {
+      complete: async (): Promise<
+        Result<SuccessResult, Error | BuildTxError>
+      > => {
         try {
-          return Ok(await callback());
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const tx = await callback();
+          return Ok({ cbor: tx.toCborHex(), dump: tx.dump() });
         } catch (error: any) {
           if (error.context && unoptimzedScriptCbor) {
             const { context } = error;
@@ -60,20 +63,23 @@ const mayFailTransaction = (
                   (a) => new helios.UplcDataValue(helios.Site.dummy(), a)
                 )
               );
-              const errorMessage = res.toString();
-              handler(errorMessage);
-              return Err(errorMessage);
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              error.message = res.toString();
+
+              const buildTxError = BuildTxError.fromError(error, tx);
+              handler(buildTxError);
+              return Err(buildTxError);
             } catch (runProgramError: any) {
-              const errorMessage = `Error running program: ${runProgramError.message} with error ${error.message}`;
-              handler(errorMessage);
-              return Err(errorMessage);
+              runProgramError.message = `Error running program: ${runProgramError.message} with error ${error.message}`;
+
+              const buildTxError = BuildTxError.fromError(runProgramError, tx);
+              handler(buildTxError);
+              return Err(buildTxError);
             }
           }
 
-          const errorMessage = convertError(error);
-          handler(errorMessage);
-          return Err(errorMessage);
+          const buildTxError = BuildTxError.fromError(error, tx);
+          handler(buildTxError);
+          return Err(buildTxError);
         }
       },
     };

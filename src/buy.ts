@@ -2,6 +2,7 @@ import { HANDLE_POLICY_ID, MIN_FEE, MIN_LOVELACE } from "./constants";
 import { buildDatumTag, decodeDatum, decodeParametersDatum } from "./datum";
 import { deployedScripts } from "./deployed";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
+import { BuildTxError, SuccessResult } from "./types";
 import {
   bigIntMax,
   fetchLatestmarketplaceScriptDetail,
@@ -12,7 +13,7 @@ import {
 import * as helios from "@koralabs/helios";
 import { IUTxO, Network } from "@koralabs/kora-labs-common";
 import { Buy } from "redeemer";
-import { Err, Ok, Result } from "ts-res";
+import { Err, Result } from "ts-res";
 
 /**
  * Configuration of function to buy handle
@@ -56,13 +57,13 @@ interface BuyWithAuthConfig {
  * Buy Handle on marketplace
  * @param {BuyConfig} config
  * @param {Network} network
- * @returns {Promise<Result<string, string>>}
+ * @returns {Promise<Result<SuccessResult,  Error | BuildTxError>>}
  */
 
 const buy = async (
   config: BuyConfig,
   network: Network
-): Promise<Result<string, string>> => {
+): Promise<Result<SuccessResult, Error | BuildTxError>> => {
   const { changeBech32Address, cborUtxos, handleHex, listingUtxo } = config;
 
   /// fetch marketplace reference script detail
@@ -76,9 +77,10 @@ const buy = async (
     : Object.values(deployedScripts[network])[0];
 
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
-  if (!cbor) return Err(`Deploy script cbor is empty`);
-  if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
-  if (!refScriptUtxo) return Err(`Deployed script UTxO is not defined`);
+  if (!cbor) return Err(new Error("Deploy script cbor is empty"));
+  if (!datumCbor) return Err(new Error("Deploy script's datum cbor is empty"));
+  if (!refScriptUtxo)
+    return Err(new Error("Deployed script UTxO is not defined"));
 
   /// fetch network parameter
   const networkParams = fetchNetworkParameters(network);
@@ -88,7 +90,7 @@ const buy = async (
     decodeParametersDatum(datumCbor)
   ).complete();
   if (!parametersResult.ok)
-    return Err(`Deployed script's datum cbor is invalid`);
+    return Err(new Error("Deployed script's datum cbor is invalid"));
   const parameters = parametersResult.data;
 
   /// get uplc program
@@ -96,12 +98,16 @@ const buy = async (
     getUplcProgram(parameters, true)
   ).complete();
   if (!uplcProgramResult.ok)
-    return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
+    return Err(
+      new Error("Getting Uplc Program error: ${uplcProgramResult.error}")
+    );
   const uplcProgram = uplcProgramResult.data;
 
   /// check deployed script cbor hex
   if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
-    return Err(`Deployed script's cbor doesn't match with its parameter`);
+    return Err(
+      new Error("Deployed script's cbor doesn't match with its parameter")
+    );
 
   const changeAddress = helios.Address.fromBech32(changeBech32Address);
   const utxos = cborUtxos.map((cborUtxo) =>
@@ -127,12 +133,12 @@ const buy = async (
   );
 
   const handleRawDatum = handleUtxo.output.datum;
-  if (!handleRawDatum) return Err("Handle UTxO datum not found");
+  if (!handleRawDatum) return Err(new Error("Handle UTxO datum not found"));
   const datumResult = await mayFailAsync(() =>
     decodeDatum(handleRawDatum)
   ).complete();
   if (!datumResult.ok)
-    return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
+    return Err(new Error(`Decoding Datum Cbor error: ${datumResult.error}`));
   const datum = datumResult.data;
 
   /// take fund to pay payouts
@@ -151,11 +157,13 @@ const buy = async (
 
   /// make redeemer
   const redeemer = mayFail(() => Buy(0));
-  if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
+  if (!redeemer.ok)
+    return Err(new Error(`Making Redeemer error: ${redeemer.error}`));
 
   /// build datum tag
   const datumTag = mayFail(() => buildDatumTag(handleUtxo.outputId));
-  if (!datumTag.ok) return Err(`Building Datum Tag error: ${datumTag.error}`);
+  if (!datumTag.ok)
+    return Err(new Error(`Building Datum Tag error: ${datumTag.error}`));
 
   /// marketplace fee output
   const marketplaceFeeOutput = new helios.TxOutput(
@@ -217,23 +225,23 @@ const buy = async (
 
   /// finalize tx
   const txCompleteResult = await mayFailTransaction(
+    tx,
     () => tx.finalize(networkParams, changeAddress, unSelected),
     refScriptDetail.unoptimizedCbor
   ).complete();
-  if (!txCompleteResult.ok) return Err(txCompleteResult.error);
-  return Ok(txCompleteResult.data.toCborHex());
+  return txCompleteResult;
 };
 
 /**
  * Buy Handle on marketplace with one of authorizers
  * @param {BuyWithAuthConfig} config
  * @param {Network} network
- * @returns {Promise<Result<string, string>>}
+ * @returns {Promise<Result<SuccessResult, Error | BuildTxError>>}
  */
 const buyWithAuth = async (
   config: BuyWithAuthConfig,
   network: Network
-): Promise<Result<string, string>> => {
+): Promise<Result<SuccessResult, Error | BuildTxError>> => {
   const {
     changeBech32Address,
     cborUtxos,
@@ -253,9 +261,10 @@ const buyWithAuth = async (
     : Object.values(deployedScripts[network])[0];
 
   const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
-  if (!cbor) return Err(`Deploy script cbor is empty`);
-  if (!datumCbor) return Err(`Deploy script's datum cbor is empty`);
-  if (!refScriptUtxo) return Err(`Deployed script UTxO is not defined`);
+  if (!cbor) return Err(new Error("Deploy script cbor is empty"));
+  if (!datumCbor) return Err(new Error("Deploy script's datum cbor is empty"));
+  if (!refScriptUtxo)
+    return Err(new Error("Deployed script UTxO is not defined"));
 
   /// fetch network parameter
   const networkParams = fetchNetworkParameters(network);
@@ -265,7 +274,7 @@ const buyWithAuth = async (
     decodeParametersDatum(datumCbor)
   ).complete();
   if (!parametersResult.ok)
-    return Err(`Deployed script's datum cbor is invalid`);
+    return Err(new Error("Deployed script's datum cbor is invalid"));
   const parameters = parametersResult.data;
 
   /// get uplc program
@@ -273,12 +282,16 @@ const buyWithAuth = async (
     getUplcProgram(parameters, true)
   ).complete();
   if (!uplcProgramResult.ok)
-    return Err(`Getting Uplc Program error: ${uplcProgramResult.error}`);
+    return Err(
+      new Error(`Getting Uplc Program error: ${uplcProgramResult.error}`)
+    );
   const uplcProgram = uplcProgramResult.data;
 
   /// check deployed script cbor hex
   if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
-    return Err(`Deployed script's cbor doesn't match with its parameter`);
+    return Err(
+      new Error("Deployed script's cbor doesn't match with its parameter")
+    );
 
   /// check authorizer pub key hash
   if (
@@ -286,7 +299,7 @@ const buyWithAuth = async (
       (authorizer) => authorizer == authorizerPubKeyHash
     )
   )
-    return Err(`Authorizer Pub Key Hash is not valid`);
+    return Err(new Error("Authorizer Pub Key Hash is not valid"));
 
   const changeAddress = helios.Address.fromBech32(changeBech32Address);
   const utxos = cborUtxos.map((cborUtxo) =>
@@ -312,12 +325,12 @@ const buyWithAuth = async (
   );
 
   const handleRawDatum = handleUtxo.output.datum;
-  if (!handleRawDatum) return Err("Handle UTxO datum not found");
+  if (!handleRawDatum) return Err(new Error("Handle UTxO datum not found"));
   const datumResult = await mayFailAsync(() =>
     decodeDatum(handleRawDatum)
   ).complete();
   if (!datumResult.ok)
-    return Err(`Decoding Datum Cbor error: ${datumResult.error}`);
+    return Err(new Error(`Decoding Datum Cbor error: ${datumResult.error}`));
   const datum = datumResult.data;
 
   /// take fund to pay payouts
@@ -333,11 +346,13 @@ const buyWithAuth = async (
 
   /// make redeemer
   const redeemer = mayFail(() => Buy(0));
-  if (!redeemer.ok) return Err(`Making Redeemer error: ${redeemer.error}`);
+  if (!redeemer.ok)
+    return Err(new Error(`Making Redeemer error: ${redeemer.error}`));
 
   /// build datum tag
   const datumTag = mayFail(() => buildDatumTag(handleUtxo.outputId));
-  if (!datumTag.ok) return Err(`Building Datum Tag error: ${datumTag.error}`);
+  if (!datumTag.ok)
+    return Err(new Error(`Building Datum Tag error: ${datumTag.error}`));
 
   /// payout outputs
   const payoutOutputs = datum.payouts.map(
@@ -392,11 +407,11 @@ const buyWithAuth = async (
 
   /// finalize tx
   const txCompleteResult = await mayFailTransaction(
+    tx,
     () => tx.finalize(networkParams, changeAddress, unSelected),
     refScriptDetail.unoptimizedCbor
   ).complete();
-  if (!txCompleteResult.ok) return Err(txCompleteResult.error);
-  return Ok(txCompleteResult.data.toCborHex());
+  return txCompleteResult;
 };
 
 export { buy, buyWithAuth };

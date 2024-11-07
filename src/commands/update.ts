@@ -68,9 +68,8 @@ const updateCommand = program
       };
 
       const txResult = await update(updateConfig, config.network);
-      if (!txResult.ok) return program.error(txResult.error);
-      console.log("\nTransaction CBOR Hex, copy and paste to wallet\n");
-      console.log(txResult.data);
+      if (!txResult.ok) console.log(txResult.error);
+      else console.log(txResult.data);
     }
   );
 
