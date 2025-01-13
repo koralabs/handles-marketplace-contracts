@@ -1,10 +1,12 @@
-import program from "../../cli/cli";
-import { loadConfig } from "../config";
-import { list, ListConfig } from "../list";
-import { adaToLovelace } from "../utils";
-
-import * as helios from "@koralabs/helios";
+import { bytesToHex } from "@helios-lang/codec-utils";
+import { makeAddress } from "@helios-lang/ledger";
+import { makeBlockfrostV0Client } from "@helios-lang/tx-utils";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
+
+import { loadConfig } from "../../src/config.js";
+import { list, ListConfig } from "../../src/list.js";
+import { adaToLovelace } from "../../src/utils/index.js";
+import program from "../cli.js";
 
 const buyCommand = program
   .command("list")
@@ -24,18 +26,15 @@ const buyCommand = program
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
-      const api = new helios.BlockfrostV0(
+      const api = makeBlockfrostV0Client(
         config.network,
         config.blockfrostApiKey
       );
-      const utxos = await api.getUtxos(
-        helios.Address.fromBech32(bech32Address)
-      );
+
+      const utxos = await api.getUtxos(makeAddress(bech32Address));
       const listConfig: ListConfig = {
         changeBech32Address: bech32Address,
-        cborUtxos: utxos.map((utxo) =>
-          Buffer.from(utxo.toFullCbor()).toString("hex")
-        ),
+        cborUtxos: utxos.map((utxo) => bytesToHex(utxo.toCbor(true))),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(
           handleName,
           "utf8"
@@ -54,7 +53,12 @@ const buyCommand = program
 
       const txResult = await list(listConfig, config.network);
       if (!txResult.ok) console.log(txResult.error);
-      else console.log(txResult.data);
+      else {
+        console.log("Tx CBOR is: ");
+        console.log(bytesToHex(txResult.data.tx.toCbor()));
+        console.log("Tx Dump is: ");
+        console.log(txResult.data.dump);
+      }
     }
   );
 

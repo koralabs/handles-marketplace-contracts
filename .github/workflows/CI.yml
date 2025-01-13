@@ -3,32 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.18
-          check-latest: true
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Install dependencies
-        run: npm ci --include dev
-
-      - name: Run tests
-        run: npm run test
-
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -40,14 +18,76 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.18
+          node-version: 20.18
           check-latest: true
 
-      - name: Update npm
-        run: npm install -g npm@latest
+      - name: Update npm and install pnpm
+        run: npm install -g npm@latest pnpm
 
       - name: Install dependencies
-        run: npm install --include dev
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Aiken
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://install.aiken-lang.org | sh
+          ~/.aiken/bin/aikup install v1.0.29-alpha
+          sudo ln -s ~/.aiken/bin/aiken /usr/local/bin/aiken
 
       - name: Lint
         run: npm run lint
+
+  aiken-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.18
+          check-latest: true
+
+      - name: Update npm and install pnpm
+        run: npm install -g npm@latest pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Aiken
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://install.aiken-lang.org | sh
+          ~/.aiken/bin/aikup install v1.0.29-alpha
+          sudo ln -s ~/.aiken/bin/aiken /usr/local/bin/aiken
+
+      - name: Run tests
+        run: npm run test:aiken
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.18
+          check-latest: true
+
+      - name: Update npm and install pnpm
+        run: npm install -g npm@latest pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Aiken
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://install.aiken-lang.org | sh
+          ~/.aiken/bin/aikup install v1.0.29-alpha
+          sudo ln -s ~/.aiken/bin/aiken /usr/local/bin/aiken
+
+      - name: Run tests
+        run: npm run test

@@ -1,14 +1,15 @@
+import { IS_PRODUCTION } from "@koralabs/kora-labs-common";
+import { fetch } from "cross-fetch";
+
 import {
   HANDLE_API_ENDPOINT,
   HANDLE_ME_API_KEY,
   KORA_USER_AGENT,
-} from "../constants";
-
-import { IS_PRODUCTION } from "@koralabs/kora-labs-common";
-import { fetch } from "cross-fetch";
+} from "../constants/index.js";
 
 const fetchApi = async (
   endpoint: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any = {}
 ): Promise<Response> => {
   const { headers, ...rest } = params;
@@ -30,6 +31,7 @@ const fetchApi = async (
 
 const fetchApiJson = async <T>(
   endpoint: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any = {}
 ): Promise<T> => {
   params.headers = {

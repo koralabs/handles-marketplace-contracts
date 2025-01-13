@@ -1,185 +1,171 @@
-import { HANDLE_POLICY_ID, MIN_FEE } from "./constants";
-import { decodeDatum, decodeParametersDatum } from "./datum";
-import { deployedScripts } from "./deployed";
-import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers";
-import { WithdrawOrUpdate } from "./redeemer";
-import { BuildTxError, SuccessResult } from "./types";
 import {
-  fetchLatestmarketplaceScriptDetail,
-  fetchNetworkParameters,
-  getUplcProgram,
-} from "./utils";
-
-import * as helios from "@koralabs/helios";
-import { IUTxO, Network } from "@koralabs/kora-labs-common";
+  decodeTxInput,
+  decodeTxOutputDatum,
+  makeAddress,
+  makeAssets,
+  makeTxInput,
+  makeTxOutput,
+  makeTxOutputId,
+  makeValue,
+} from "@helios-lang/ledger";
+import { makeTxBuilder, NetworkName } from "@helios-lang/tx-utils";
+import { decodeUplcProgramV2FromCbor } from "@helios-lang/uplc";
+import { ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Result } from "ts-res";
+
+import { HANDLE_POLICY_ID } from "./constants/index.js";
+import { decodeDatum } from "./datum.js";
+import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers/index.js";
+import { WithdrawOrUpdate } from "./redeemer.js";
+import { BuildTxError, SuccessResult } from "./types.js";
+import { fetchDeployedScript } from "./utils/contract.js";
 
 /**
  * Configuration of function to withdraw handle
  * @interface
  * @typedef {object} WithdrawConfig
- * @property {string} changeBech32Address Change address of wallet who is performing `list`
+ * @property {string} changeBech32Address Change address of wallet who is performing `withdraw`
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
  * @property {string} handleHex Handle name's hex format (asset name label is also included)
- * @property {IUTxO} listingUtxo UTxO where this handle is listed
+ * @property {string} listingCborUtxo UTxO (cbor format) where this handle is listed
+ * @property {ScriptDetails | undefined} customRefScriptDetail Custom Reference Script Detail
  */
 interface WithdrawConfig {
   changeBech32Address: string;
   cborUtxos: string[];
   collateralCborUtxo?: string | null;
   handleHex: string;
-  listingUtxo: IUTxO;
+  listingCborUtxo: string;
+  customRefScriptDetail?: ScriptDetails;
 }
 
 /**
- * Withdraw Handle from marketplace
+ * Withdraw listed Handle on marketplace
  * @param {WithdrawConfig} config
- * @param {Network} network
- * @returns {Promise<Result<SuccessResult, Error | BuildTxError>>}
+ * @param {NetworkName} network
+ * @returns {Promise<Result<SuccessResult,  Error | BuildTxError>>}
  */
+
 const withdraw = async (
   config: WithdrawConfig,
-  network: Network
+  network: NetworkName
 ): Promise<Result<SuccessResult, Error | BuildTxError>> => {
-  const { changeBech32Address, cborUtxos, handleHex, listingUtxo } = config;
-
-  /// fetch marketplace reference script detail
-  const refScriptDetailResult = await mayFailAsync(() =>
-    fetchLatestmarketplaceScriptDetail()
+  const isMainnet = network === "mainnet";
+  const {
+    changeBech32Address,
+    cborUtxos,
+    collateralCborUtxo,
+    listingCborUtxo,
+    handleHex,
+    customRefScriptDetail,
+  } = config;
+  const refScriptDetailResult = await mayFailAsync(async () =>
+    customRefScriptDetail
+      ? customRefScriptDetail
+      : await fetchDeployedScript(network)
   ).complete();
+  if (!refScriptDetailResult.ok)
+    return Err(new Error("Failed to fetch ref script"));
+  const refScriptDetail = refScriptDetailResult.data;
 
-  /// use deployed script if fetch is failed
-  const refScriptDetail = refScriptDetailResult.ok
-    ? refScriptDetailResult.data
-    : Object.values(deployedScripts[network])[0];
-
-  const { cbor, datumCbor, refScriptUtxo } = refScriptDetail;
+  const { cbor, unoptimizedCbor, datumCbor, refScriptUtxo, refScriptAddress } =
+    refScriptDetail;
   if (!cbor) return Err(new Error("Deploy script cbor is empty"));
   if (!datumCbor) return Err(new Error("Deploy script's datum cbor is empty"));
-  if (!refScriptUtxo)
+  if (!refScriptUtxo || !refScriptAddress)
     return Err(new Error("Deployed script UTxO is not defined"));
 
-  /// fetch network parameter
-  const networkParams = fetchNetworkParameters(network);
-
-  /// decode parameter
-  const parametersResult = await mayFailAsync(() =>
-    decodeParametersDatum(datumCbor)
-  ).complete();
-  if (!parametersResult.ok)
-    return Err(new Error("Deployed script's datum cbor is invalid"));
-  const parameters = parametersResult.data;
-
-  /// get uplc program
-  const uplcProgramResult = await mayFailAsync(() =>
-    getUplcProgram(parameters, true)
-  ).complete();
+  // get uplc program
+  const uplcProgramResult = mayFail(() => decodeUplcProgramV2FromCbor(cbor));
   if (!uplcProgramResult.ok)
     return Err(
-      new Error(`Getting Uplc Program error: ${uplcProgramResult.error}`)
+      new Error(`Decoding Uplc Program error: ${uplcProgramResult.error}`)
     );
-  const uplcProgram = uplcProgramResult.data;
+  let uplcProgram = uplcProgramResult.data;
 
-  /// check deployed script cbor hex
-  if (cbor != helios.bytesToHex(uplcProgram.toCbor()))
-    return Err(
-      new Error("Deployed script's cbor doesn't match with its parameter")
+  if (unoptimizedCbor) {
+    const unoptimizedUplcProgramResult = mayFail(() =>
+      decodeUplcProgramV2FromCbor(unoptimizedCbor)
     );
+    if (!unoptimizedUplcProgramResult.ok)
+      return Err(
+        new Error(
+          `Decoding Unoptimized Uplc Program error: ${unoptimizedUplcProgramResult.error}`
+        )
+      );
+    const unoptimizedUplcProgram = unoptimizedUplcProgramResult.data;
+    uplcProgram = uplcProgram.withAlt(unoptimizedUplcProgram);
+  }
 
-  const changeAddress = helios.Address.fromBech32(changeBech32Address);
-  const utxos = cborUtxos.map((cborUtxo) =>
-    helios.TxInput.fromFullCbor([...Buffer.from(cborUtxo, "hex")])
+  /// start building tx
+  const txBuilder = makeTxBuilder({ isMainnet });
+  const changeAddress = makeAddress(changeBech32Address);
+  const spareUtxos = cborUtxos.map(decodeTxInput);
+  const listingUtxo = decodeTxInput(listingCborUtxo);
+  const handleValue = makeValue(
+    0n,
+    makeAssets([[HANDLE_POLICY_ID, [[handleHex, 1n]]]])
   );
-  const handleUtxo = new helios.TxInput(
-    new helios.TxOutputId(
-      helios.TxId.fromHex(listingUtxo.tx_id),
-      listingUtxo.index
-    ),
-    new helios.TxOutput(
-      helios.Address.fromBech32(listingUtxo.address),
-      new helios.Value(
-        BigInt(listingUtxo.lovelace),
-        new helios.Assets([[HANDLE_POLICY_ID, [[handleHex, 1]]]])
+
+  // check listingUtxo has handle in it
+  if (!listingUtxo.value.isGreaterOrEqual(handleValue))
+    return Err(new Error("Listing UTxO doesn't have handle in it"));
+
+  // <--- decode listing datum
+  const listingDatum = listingUtxo.datum;
+  if (!listingDatum) return Err(new Error("Listing UTxO datum not found"));
+  const decodedResult = mayFail(() => decodeDatum(listingDatum, network));
+  if (!decodedResult.ok)
+    return Err(new Error(`Decoding Datum Cbor error: ${decodedResult.error}`));
+  const decodedDatum = decodedResult.data;
+
+  // check changeAddress's pubkey hash is same as decoded datum's owner
+  if (changeAddress.spendingCredential.kind != "PubKeyHash")
+    return Err(new Error("Must be Base Address to perform update"));
+  if (changeAddress.spendingCredential.toHex() != decodedDatum.owner)
+    return Err(new Error("Must be owner to withdraw"));
+
+  // <--- make ref script input
+  const refInput = makeTxInput(
+    makeTxOutputId(refScriptUtxo),
+    makeTxOutput(
+      makeAddress(refScriptAddress),
+      makeValue(
+        1n,
+        makeAssets([[HANDLE_POLICY_ID, [[refScriptDetail.handleHex, 1]]]])
       ),
-      listingUtxo.datum
-        ? helios.Datum.inline(
-            helios.UplcData.fromCbor(helios.hexToBytes(listingUtxo.datum))
-          )
-        : null
+      decodeTxOutputDatum(datumCbor),
+      uplcProgram
     )
   );
+  txBuilder.refer(refInput);
 
-  const handleRawDatum = handleUtxo.output.datum;
-  if (!handleRawDatum) return Err(new Error("Handle UTxO datum not found"));
-  const datumResult = await mayFailAsync(() =>
-    decodeDatum(handleRawDatum)
-  ).complete();
-  if (!datumResult.ok)
-    return Err(new Error(`Decoding Datum Cbor error: ${datumResult.error}`));
-  const datum = datumResult.data;
+  // make redeemer
+  const redeemerResult = mayFail(() => WithdrawOrUpdate());
+  if (!redeemerResult.ok)
+    return Err(new Error(`Making Redeemer error: ${redeemerResult.error}`));
 
-  const ownerPubKeyHash = changeAddress.pubKeyHash;
-  if (!ownerPubKeyHash)
-    return Err(new Error("Change Address doesn't have payment key"));
-  if (datum.owner != ownerPubKeyHash.hex)
-    return Err(new Error("You must be owner to withdraw"));
+  // <--- spend listing utxo
+  txBuilder.spendUnsafe([listingUtxo], redeemerResult.data);
 
-  /// take fund
-  const [selected, unSelected] = helios.CoinSelection.selectLargestFirst(
-    utxos,
-    new helios.Value(MIN_FEE)
-  );
+  // <--- add owner as signer
+  txBuilder.addSigners(changeAddress.spendingCredential);
 
-  /// redeemer
-  const redeemer = mayFail(() => WithdrawOrUpdate());
-  if (!redeemer.ok)
-    return Err(new Error(`Making Redeemer error: ${redeemer.error}`));
-
-  /// add handle withdraw output
-  const handleWithdrawOutput = new helios.TxOutput(
-    changeAddress,
-    new helios.Value(0n, handleUtxo.value.assets)
-  );
-  handleWithdrawOutput.correctLovelace(networkParams);
-
-  /// make ref input
-  const refInput = new helios.TxInput(
-    new helios.TxOutputId(refScriptDetail.refScriptUtxo || ""),
-    new helios.TxOutput(
-      helios.Address.fromBech32(refScriptDetail.refScriptAddress || ""),
-      new helios.Value(
-        BigInt(1),
-        new helios.Assets([
-          [HANDLE_POLICY_ID, [[refScriptDetail.handleHex, 1]]],
-        ])
-      ),
-      refScriptDetail.datumCbor
-        ? helios.Datum.inline(
-            helios.UplcData.fromCbor(
-              helios.hexToBytes(refScriptDetail.datumCbor)
-            )
-          )
-        : null,
-      helios.UplcProgram.fromCbor(refScriptDetail.cbor || "")
-    )
-  );
+  // <--- add collateral if passed
+  if (collateralCborUtxo) {
+    const collateralUtxo = decodeTxInput(collateralCborUtxo);
+    txBuilder.addCollateral(collateralUtxo);
+  }
 
   /// build tx
-  const tx = new helios.Tx()
-    .addInputs(selected)
-    .addInput(handleUtxo, redeemer.data) /// collect handle nft
-    .addRefInput(refInput, uplcProgram)
-    .addSigner(ownerPubKeyHash) /// sign with owner
-    .addOutput(handleWithdrawOutput);
-
-  /// finalize tx
-  const txCompleteResult = await mayFailTransaction(
-    tx,
-    () => tx.finalize(networkParams, changeAddress, unSelected),
-    refScriptDetail.unoptimizedCbor
+  const txResult = await mayFailTransaction(
+    txBuilder,
+    changeAddress,
+    spareUtxos
   ).complete();
-  return txCompleteResult;
+
+  return txResult;
 };
 
 export { withdraw };

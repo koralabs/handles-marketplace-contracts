@@ -1,1 +1,1 @@
-export * from "./invariant";
+export * from "./invariant.js";
