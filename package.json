@@ -1,6 +1,6 @@
 {
-  "name": "aiken-handles-marketplace-sc",
-  "version": "0.0.1",
+  "name": "handles-marketplace-contracts",
+  "version": "0.1.0",
   "description": "Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.",
   "main": "index.js",
   "type": "module",
