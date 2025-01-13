@@ -1,13 +1,11 @@
-import * as helios from "@koralabs/helios";
+import { makeConstrData, makeIntData, UplcData } from "@helios-lang/uplc";
 
-const Buy = (payoutOutputsOffset: number): helios.UplcData => {
-  return new helios.ConstrData(0, [
-    new helios.IntData(BigInt(payoutOutputsOffset)),
-  ]);
+const Buy = (payoutOutputsOffset: number): UplcData => {
+  return makeConstrData(0, [makeIntData(BigInt(payoutOutputsOffset))]);
 };
 
-const WithdrawOrUpdate = (): helios.UplcData => {
-  return new helios.ConstrData(1, []);
+const WithdrawOrUpdate = (): UplcData => {
+  return makeConstrData(1, []);
 };
 
 export { Buy, WithdrawOrUpdate };

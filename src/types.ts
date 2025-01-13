@@ -1,4 +1,5 @@
-import * as helios from "@koralabs/helios";
+import { bytesToHex } from "@helios-lang/codec-utils";
+import { Tx } from "@helios-lang/ledger";
 
 /**
  * Parameters for marketplace contract
@@ -16,7 +17,7 @@ interface Parameters {
  * Payout - you have to pay `amountLovelace` to `address` when buy handle
  * @interface
  * @typedef {object} Payout
- * @property {string} address
+ * @property {string} address bech32 format
  * @property {bigint} amountLovelace
  */
 interface Payout {
@@ -25,13 +26,13 @@ interface Payout {
 }
 
 /**
- * Datum - attached to handles listed on marketplace
+ * MarketplaceDatum - attached to handles listed on marketplace
  * @interface
- * @typedef {object} Datum
+ * @typedef {object} MarketplaceDatum
  * @property {Payout[]} payouts
  * @property {string} owner Owner's Pub Key Hash
  */
-interface Datum {
+interface MarketplaceDatum {
   payouts: Payout[];
   owner: string;
 }
@@ -41,10 +42,10 @@ class BuildTxError extends Error {
   failedTxCbor: string;
   failedTxJson: object;
 
-  static fromError(error: Error, failedTx: helios.Tx) {
+  static fromError(error: Error, failedTx: Tx) {
     const err = new BuildTxError(
       error.message,
-      failedTx.toCborHex(),
+      bytesToHex(failedTx.toCbor()),
       failedTx.dump()
     );
     err.stack = error.stack;
@@ -69,9 +70,10 @@ class BuildTxError extends Error {
  * @property {any} dump Transaction's Dump
  */
 interface SuccessResult {
-  cbor: string;
+  tx: Tx;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dump: any;
 }
 
-export type { Datum, Parameters, Payout, SuccessResult };
+export type { MarketplaceDatum, Parameters, Payout, SuccessResult };
 export { BuildTxError };

@@ -1,10 +1,11 @@
-import mainnetParams from "./params/mainnet.json";
-import preprodParams from "./params/preprod.json";
-import previewParams from "./params/preview.json";
+import { Command } from "commander";
+import { Decimal } from "decimal.js";
+import Enquirer from "enquirer";
+import { Err, Ok, Result } from "ts-res";
 
-import * as helios from "@koralabs/helios";
-import { Network } from "@koralabs/kora-labs-common";
-import Decimal from "decimal.js";
+const sleep = async (milliseconds: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(() => resolve(true), milliseconds));
+};
 
 const adaToLovelace = (ada: number): bigint =>
   BigInt(new Decimal(ada).mul(Math.pow(10, 6)).floor().toString());
@@ -21,10 +22,38 @@ const bigIntMax = (...args: bigint[]): bigint => {
   }, args[0]);
 };
 
-const fetchNetworkParameters = (network: Network): helios.NetworkParams => {
-  if (network == "mainnet") return new helios.NetworkParams(mainnetParams);
-  if (network == "preprod") return new helios.NetworkParams(preprodParams);
-  return new helios.NetworkParams(previewParams);
+const requestSeed = async (): Promise<Result<string, string>> => {
+  try {
+    const enquirer = new Enquirer();
+    const response = await enquirer.prompt({
+      type: "password",
+      name: "seed",
+      message: "Enter seed phrase for funding wallet:\n",
+    });
+
+    if (
+      !(
+        response &&
+        "seed" in response &&
+        typeof response.seed == "string" &&
+        response.seed.trim()
+      )
+    ) {
+      return Err("Input seed correctly.");
+    }
+
+    return Ok(response.seed.trim());
+  } catch {
+    return Err("Input seed correctly");
+  }
 };
 
-export { adaToLovelace, bigIntMax, bigIntMin, fetchNetworkParameters };
+const getSeed = async (program: Command, seed?: string): Promise<string> => {
+  if (seed) return seed;
+  const seedResult = await requestSeed();
+  if (!seedResult.ok) program.error(seedResult.error);
+
+  return seedResult.data;
+};
+
+export { adaToLovelace, bigIntMax, bigIntMin, getSeed, sleep };

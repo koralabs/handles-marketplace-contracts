@@ -1,6 +1,6 @@
-import convertError from "./convert";
+import convertError from "./convert.js";
 
-export * from "./handleable";
-export * from "./handleableAsync";
-export * from "./tx";
+export * from "./handleable.js";
+export * from "./handleableAsync.js";
+export * from "./tx.js";
 export { convertError };

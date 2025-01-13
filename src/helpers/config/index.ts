@@ -1,7 +1,7 @@
-import { mayFail } from "../error";
-
 import { config, DotenvConfigOptions } from "dotenv";
 import { Err, Ok, Result } from "ts-res";
+
+import { mayFail } from "../error/index.js";
 
 type ConfigTypeNames = "string" | "number";
 type ConfigTypes = string | number;

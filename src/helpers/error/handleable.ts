@@ -1,6 +1,6 @@
-import convertError from "./convert";
-
 import { Err, Ok, Result } from "ts-res";
+
+import convertError from "./convert.js";
 
 type Callback<T> = () => T;
 type ErrType = string | Error | void | undefined;

@@ -1,16 +1,17 @@
-import { loadConfig } from "../../src/config";
-import { withdraw, WithdrawConfig } from "../../src/withdraw";
-
-import program from "./cli";
-
-import * as helios from "@koralabs/helios";
+import { bytesToHex } from "@helios-lang/codec-utils";
+import { makeAddress, makeTxOutputId } from "@helios-lang/ledger";
+import { makeBlockfrostV0Client } from "@helios-lang/tx-utils";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
+
+import { loadConfig } from "../../src/config.js";
+import { withdraw, WithdrawConfig } from "../../src/withdraw.js";
+import program from "../cli.js";
 
 const withdrawCommand = program
   .command("withdraw")
   .description("Withdraw Handle NFT from Marketplace")
   .argument("<address>", "Address to perform withdraw")
-  .argument("<handle-name>", "Ada Handle Name to buy on marketplace")
+  .argument("<handle-name>", "Ada Handle Name to withdraw on marketplace")
   .argument("<utxo-tx-hash>", "Transaction Hash of UTxO where handle is")
   .argument("<utxo-tx-index>", "Transaction Index of UTxO where handle is")
   .action(
@@ -24,38 +25,33 @@ const withdrawCommand = program
       if (!configResult.ok) return program.error(configResult.error);
       const config = configResult.data;
 
-      const api = new helios.BlockfrostV0(
+      const api = makeBlockfrostV0Client(
         config.network,
         config.blockfrostApiKey
       );
-      const utxos = await api.getUtxos(
-        helios.Address.fromBech32(bech32Address)
-      );
-      const handleUtxo = await api.getUtxo(
-        new helios.TxOutputId(`${txHash}#${txIndex}`)
+      const utxos = await api.getUtxos(makeAddress(bech32Address));
+      const listingUtxo = await api.getUtxo(
+        makeTxOutputId(`${txHash}#${txIndex}`)
       );
 
       const withdrawConfig: WithdrawConfig = {
         changeBech32Address: bech32Address,
-        cborUtxos: utxos.map((utxo) =>
-          Buffer.from(utxo.toFullCbor()).toString("hex")
-        ),
+        cborUtxos: utxos.map((utxo) => bytesToHex(utxo.toCbor(true))),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(
           handleName,
           "utf8"
         ).toString("hex")}`,
-        listingUtxo: {
-          address: handleUtxo.address.toBech32(),
-          datum: handleUtxo.output.datum?.data?.toCborHex() || "",
-          index: handleUtxo.outputId.utxoIdx,
-          tx_id: handleUtxo.outputId.txId.hex,
-          lovelace: Number(handleUtxo.value.lovelace),
-        },
+        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
       };
 
       const txResult = await withdraw(withdrawConfig, config.network);
       if (!txResult.ok) console.log(txResult.error);
-      else console.log(txResult.data);
+      else {
+        console.log("Tx CBOR is: ");
+        console.log(bytesToHex(txResult.data.tx.toCbor()));
+        console.log("Tx Dump is: ");
+        console.log(txResult.data.dump);
+      }
     }
   );
 

@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-SCRIPT=$(realpath "$SCRIPT_DIR/../handles-marketplace-contracts/src/entrypoints/cli.ts" 2>/dev/null || realpath "$SCRIPT_DIR/../src/entrypoint.ts")
+SCRIPT=$(realpath "$SCRIPT_DIR/../CLI/entrypoint.ts")
 TSX=$(realpath "$SCRIPT_DIR/../node_modules/.bin/tsx")
 
-NODE_ENV=preprod "$TSX" "$SCRIPT" "$@"
+NODE_ENV=preview "$TSX" "$SCRIPT" "$@"
