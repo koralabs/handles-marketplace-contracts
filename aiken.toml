@@ -1,13 +1,13 @@
-name = "golddyev/marketplace-sc-old"
+name = "koralabs/handles-marketplace-contracts"
 version = "0.0.0"
 compiler = "v1.0.29-alpha"
 plutus = "v2"
 license = "Apache-2.0"
-description = "Aiken contracts for project 'golddyev/marketplace-sc-old'"
+description = "Aiken contracts for project 'koralabs/handles-marketplace-contracts'"
 
 [repository]
-user = "golddyev"
-project = "marketplace-sc-old"
+user = "koralabs"
+project = "handles-marketplace-contracts"
 platform = "github"
 
 [[dependencies]]

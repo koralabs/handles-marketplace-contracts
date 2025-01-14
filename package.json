@@ -5,13 +5,13 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "rm -rf ./lib && npx tsc",
+    "build": "npx tsc",
     "lint": "concurrently \"aiken fmt --check\" \"npx eslint '**/{src,test}/**/*.{ts,mjs}' --max-warnings=0\"",
     "test:aiken": "concurrently \"aiken fmt --check\" \"aiken check\"",
     "test": "vitest run"
   },
   "bin": {
-    "marketplace": "./bin/marketplace"
+    "marketplace": "bin/marketplace"
   },
   "keywords": [],
   "author": "",
