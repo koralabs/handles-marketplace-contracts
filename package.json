@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "rm -rf ./dist && npx tsc",
+    "build": "rm -rf ./lib && npx tsc",
     "lint": "concurrently \"aiken fmt --check\" \"npx eslint '**/{src,test}/**/*.{ts,mjs}' --max-warnings=0\"",
     "test:aiken": "concurrently \"aiken fmt --check\" \"aiken check\"",
     "test": "vitest run"

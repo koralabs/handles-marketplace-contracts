@@ -65,7 +65,7 @@ docs/
 .env*.local
 
 # build files
-dist
+lib
 
 # plutus.json
 plutus.json
