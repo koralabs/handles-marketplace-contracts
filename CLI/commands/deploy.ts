@@ -5,8 +5,8 @@ import { loadConfig } from "../../src/config.js";
 import { AUTHORIZERS, MARKETPLACE_ADDRESS } from "../../src/constants/index.js";
 import { deploy, DeployConfig } from "../../src/deploy.js";
 import { getBlockfrostApi } from "../../src/helpers/index.js";
-import { getSeed } from "../../src/utils/index.js";
 import program from "../cli.js";
+import { getSeed } from "../utils.js";
 
 const deployCommand = program
   .command("deploy")

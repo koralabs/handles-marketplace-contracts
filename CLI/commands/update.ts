@@ -5,8 +5,8 @@ import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 import { loadConfig } from "../../src/config.js";
 import { update, UpdateConfig } from "../../src/update.js";
-import { adaToLovelace } from "../../src/utils/common.js";
 import program from "../cli.js";
+import { adaToLovelace } from "../utils.js";
 
 const updateCommand = program
   .command("update")
