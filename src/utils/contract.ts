@@ -2,10 +2,10 @@ import { NetworkParams } from "@helios-lang/ledger";
 import { NetworkName } from "@helios-lang/tx-utils";
 import { decodeUplcProgramV2FromCbor, UplcProgramV2 } from "@helios-lang/uplc";
 import { ScriptDetails } from "@koralabs/kora-labs-common";
-import { makeSCParametersUplcValues } from "datum.js";
 import { Result } from "ts-res";
 
 import { optimizedCompiledCode } from "../contracts/plutus-v2/contract.js";
+import { makeSCParametersUplcValues } from "../datum.js";
 import { deployedScripts } from "../deployed/index.js";
 import { mayFail, mayFailAsync } from "../helpers/index.js";
 import { Parameters } from "../types.js";
@@ -40,7 +40,11 @@ const getUplcProgram = async (
 const fetchDeployedScript = async (
   network: NetworkName
 ): Promise<ScriptDetails> => {
-  return Object.values(deployedScripts[network])[0];
+  try {
+    return Object.values(deployedScripts[network])[0];
+  } catch {
+    throw new Error(`Not deployed on ${network}`);
+  }
 };
 
 export { fetchDeployedScript, fetchNetworkParameters, getUplcProgram };

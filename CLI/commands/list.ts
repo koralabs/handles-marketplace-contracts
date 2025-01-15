@@ -5,8 +5,8 @@ import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 import { loadConfig } from "../../src/config.js";
 import { list, ListConfig } from "../../src/list.js";
-import { adaToLovelace } from "../../src/utils/index.js";
 import program from "../cli.js";
+import { adaToLovelace } from "../utils.js";
 
 const buyCommand = program
   .command("list")
