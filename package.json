@@ -8,7 +8,7 @@
     "build": "tsc",
     "lint": "concurrently \"aiken fmt --check\" \"npx eslint '**/{src,test}/**/*.{ts,mjs}' --max-warnings=0\"",
     "test:aiken": "concurrently \"aiken fmt --check\" \"aiken check\"",
-    "test": "vitest run" 
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
