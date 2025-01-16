@@ -1,4 +1,4 @@
-import { hexToBytes } from "@helios-lang/codec-utils";
+import { bytesToHex, hexToBytes } from "@helios-lang/codec-utils";
 import {
   makeAddress,
   makeAssets,
@@ -50,4 +50,20 @@ const makeListingTxInputFromListingIUTxO = (
     )
   );
 
-export { bigIntMax, bigIntMin, makeListingTxInputFromListingIUTxO, sleep };
+const convertTxInputToIUTxO = (txInput: TxInput): IUTxO => ({
+  address: txInput.address.toString(),
+  tx_id: txInput.id.txId.toHex(),
+  index: txInput.id.index,
+  lovelace: Number(txInput.value.lovelace),
+  datum: txInput.datum?.data
+    ? bytesToHex(txInput.datum.data.toCbor())
+    : undefined,
+});
+
+export {
+  bigIntMax,
+  bigIntMin,
+  convertTxInputToIUTxO,
+  makeListingTxInputFromListingIUTxO,
+  sleep,
+};

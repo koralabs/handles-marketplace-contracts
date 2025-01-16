@@ -8,6 +8,7 @@ import { buy, BuyConfig, buyWithAuth, BuyWithAuthConfig } from "../src/buy.js";
 import { invariant } from "../src/helpers/index.js";
 import { list, ListConfig } from "../src/list.js";
 import { update, UpdateConfig } from "../src/update.js";
+import { convertTxInputToIUTxO } from "../src/utils/index.js";
 import { withdraw, WithdrawConfig } from "../src/withdraw.js";
 import { myTest } from "./setup.js";
 
@@ -79,7 +80,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
         cborUtxos: userCborUtxos,
         changeBech32Address: user2Wallet.address.toBech32(),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         customRefScriptDetail: refScriptDetail,
       };
       const buyTxResult = await buy(buyConfig, network);
@@ -181,7 +182,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
         cborUtxos: userCborUtxos,
         changeBech32Address: user4Wallet.address.toBech32(),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         customRefScriptDetail: refScriptDetail,
       };
       const buyTxResult = await buy(buyConfig, network);
@@ -212,7 +213,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
         cborUtxos: userCborUtxos,
         changeBech32Address: user2Wallet.address.toBech32(),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         customRefScriptDetail: refScriptDetail,
       };
       const withdrawTxResult = await withdraw(withdrawConfig, network);
@@ -295,7 +296,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
         changeBech32Address: user1Wallet.address.toBech32(),
         authorizerPubKeyHash: parameters.authorizers[0],
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         customRefScriptDetail: refScriptDetail,
       };
       const buyTxResult = await buyWithAuth(buyWithAuthConfig, network);
@@ -396,7 +397,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
       const updateConfig: UpdateConfig = {
         cborUtxos: userCborUtxos,
         changeBech32Address: user1Wallet.address.toBech32(),
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
         newPayouts: [
           {
@@ -446,7 +447,7 @@ describe.sequential("Koralab Marketplace smart contract test", () => {
         cborUtxos: userCborUtxos,
         changeBech32Address: user4Wallet.address.toBech32(),
         handleHex: `${AssetNameLabel.LBL_222}${Buffer.from(testHandleName, "utf8").toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         customRefScriptDetail: refScriptDetail,
       };
       const buyTxResult = await buy(buyConfig, network);

@@ -10,6 +10,7 @@ import {
   BuyWithAuthConfig,
 } from "../../src/buy.js";
 import { loadConfig } from "../../src/config.js";
+import { convertTxInputToIUTxO } from "../../src/utils/index.js";
 import program from "../cli.js";
 
 program
@@ -46,7 +47,7 @@ program
           handleName,
           "utf8"
         ).toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
       };
 
       const txResult = await buy(buyConfig, config.network);
@@ -96,7 +97,7 @@ program
           handleName,
           "utf8"
         ).toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
         authorizerPubKeyHash,
       };
 
