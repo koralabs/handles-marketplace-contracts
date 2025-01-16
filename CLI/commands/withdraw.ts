@@ -4,6 +4,7 @@ import { makeBlockfrostV0Client } from "@helios-lang/tx-utils";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 import { loadConfig } from "../../src/config.js";
+import { convertTxInputToIUTxO } from "../../src/utils/index.js";
 import { withdraw, WithdrawConfig } from "../../src/withdraw.js";
 import program from "../cli.js";
 
@@ -41,7 +42,7 @@ const withdrawCommand = program
           handleName,
           "utf8"
         ).toString("hex")}`,
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
       };
 
       const txResult = await withdraw(withdrawConfig, config.network);
