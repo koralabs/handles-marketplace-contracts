@@ -75,7 +75,9 @@ const list = async (
   const networkParameters = networkParametersResult.data;
 
   // decode parameter
-  const parametersResult = mayFail(() => decodeSCParametersDatum(datumCbor));
+  const parametersResult = mayFail(() =>
+    decodeSCParametersDatum(datumCbor, network)
+  );
   if (!parametersResult.ok)
     return Err(
       new Error(

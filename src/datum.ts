@@ -4,7 +4,6 @@ import {
   decodeTxOutputDatum,
   InlineTxOutputDatum,
   makeAddress,
-  makeDummyPubKeyHash,
   makeInlineTxOutputDatum,
   makePubKeyHash,
   makeStakingValidatorHash,
@@ -44,6 +43,21 @@ const buildCredentialData = (credential: SpendingCredential): UplcData => {
   ]);
 };
 
+const decodeCredentialFromData = (data: UplcData): SpendingCredential => {
+  const credentialConstrData = expectConstrData(data, undefined, 1);
+  if (credentialConstrData.tag === 0) {
+    // verification key credential
+    return makePubKeyHash(
+      expectByteArrayData(credentialConstrData.fields[0]).toHex()
+    );
+  } else {
+    // script credential
+    return makeValidatorHash(
+      expectByteArrayData(credentialConstrData.fields[0]).toHex()
+    );
+  }
+};
+
 const buildingStakingCredentialData = (
   stakingCredential: StakingCredential | undefined
 ): UplcData => {
@@ -55,6 +69,38 @@ const buildingStakingCredentialData = (
       ]),
     ]),
   ]);
+};
+
+const decodeStakingCredentialFromData = (
+  data: UplcData
+): StakingCredential | undefined => {
+  const stakingCredentialOptConstrData = expectConstrData(data);
+  if (stakingCredentialOptConstrData.tag == 0) {
+    // staking credential opt is Some
+    const stakeCredentialConstrData = expectConstrData(
+      stakingCredentialOptConstrData.fields[0],
+      0,
+      1
+    );
+    const credentialConstrData = expectConstrData(
+      stakeCredentialConstrData.fields[0],
+      undefined,
+      1
+    );
+    if (credentialConstrData.tag === 0) {
+      // verification key credential
+      return makePubKeyHash(
+        expectByteArrayData(credentialConstrData.fields[0]).toHex()
+      );
+    } else {
+      // staking script credential
+      return makeStakingValidatorHash(
+        expectByteArrayData(credentialConstrData.fields[0]).toHex()
+      );
+    }
+  } else {
+    return undefined;
+  }
 };
 
 const buildAddressData = (bech32Address: string): UplcData => {
@@ -69,46 +115,17 @@ const buildAddressData = (bech32Address: string): UplcData => {
 const decodeAddressFromData = (
   data: UplcData,
   network: NetworkName
-): string => {
-  const addressData = expectConstrData(data, 0, 2);
-  const paymentCredentialData = expectConstrData(addressData.fields[0]);
-  const stakingCredentialData = expectConstrData(addressData.fields[1]);
+): Address => {
+  const isMainnet = network == "mainnet";
 
-  let spendingCredential: SpendingCredential = makeDummyPubKeyHash();
-  let stakingCredential: StakingCredential | undefined = undefined;
-
-  if (paymentCredentialData.tag === 0) {
-    spendingCredential = makePubKeyHash(
-      expectByteArrayData(paymentCredentialData.fields[0]).toHex()
-    );
-  } else {
-    spendingCredential = makeValidatorHash(
-      expectByteArrayData(paymentCredentialData.fields[0]).toHex()
-    );
-  }
-
-  if (stakingCredentialData.tag == 0) {
-    const inlineCredentialData = expectConstrData(
-      stakingCredentialData.fields[0],
-      0,
-      1
-    );
-    const credentialData = expectConstrData(inlineCredentialData.fields[0]);
-    if (credentialData.tag === 0) {
-      stakingCredential = makePubKeyHash(
-        expectByteArrayData(credentialData.fields[0]).toHex()
-      );
-    } else {
-      stakingCredential = makeStakingValidatorHash(
-        expectByteArrayData(credentialData.fields[0]).toHex()
-      );
-    }
-  }
-  return makeAddress(
-    network == "mainnet",
-    spendingCredential,
-    stakingCredential
-  ).toBech32();
+  const addressConstrData = expectConstrData(data, 0, 2);
+  const spendingCredential = decodeCredentialFromData(
+    addressConstrData.fields[0]
+  );
+  const stakingCredential = decodeStakingCredentialFromData(
+    addressConstrData.fields[1]
+  );
+  return makeAddress(isMainnet, spendingCredential, stakingCredential);
 };
 
 const buildDatum = (datum: MarketplaceDatum): InlineTxOutputDatum => {
@@ -133,32 +150,33 @@ const decodeDatum = (
   if (datum.kind != "InlineTxOutputDatum")
     throw new Error("Must be inline datum");
   const data = datum.data;
-  const datumData = expectConstrData(data, 0, 2);
-  const payoutsData = expectListData(
-    datumData.fields[0],
-    "Payouts Data must be List"
-  );
-  const ownerData = expectByteArrayData(
-    datumData.fields[1],
-    "Owner Data must be ByteArray"
-  );
+  const datumConstrData = expectConstrData(data, 0, 2);
 
-  const payouts = payoutsData.items.map((itemData) => {
-    const payoutData = expectConstrData(itemData, 0, 2);
-    const address = decodeAddressFromData(payoutData.fields[0], network);
-    const amountData = expectIntData(
-      payoutData.fields[1],
-      "Amount Data must be Int"
-    );
+  const payoutsListData = expectListData(
+    datumConstrData.fields[0],
+    "Payouts must be List"
+  );
+  const owner = expectByteArrayData(
+    datumConstrData.fields[1],
+    "Owner must be ByteArray"
+  ).toHex();
+
+  const payouts = payoutsListData.items.map((item) => {
+    const payoutConstrData = expectConstrData(item, 0, 2);
+    const address = decodeAddressFromData(payoutConstrData.fields[0], network);
+    const amount = expectIntData(
+      payoutConstrData.fields[1],
+      "Amount must be Int"
+    ).value;
     return {
-      address,
-      amountLovelace: amountData.value,
+      address: address.toString(),
+      amountLovelace: amount,
     } as Payout;
   });
 
   return {
     payouts,
-    owner: ownerData.toHex(),
+    owner,
   };
 };
 
@@ -179,7 +197,7 @@ const buildSCParametersDatum = (
   authorizers: PubKeyHash[]
 ) => {
   const data = makeListData([
-    makeByteArrayData(marketplaceAddress.bytes),
+    buildAddressData(marketplaceAddress.toString()),
     makeListData(
       authorizers.map((authorizer) => makeByteArrayData(authorizer.bytes))
     ),
@@ -187,26 +205,27 @@ const buildSCParametersDatum = (
   return makeInlineTxOutputDatum(data);
 };
 
-const decodeSCParametersDatum = (cbor: string): Parameters => {
+const decodeSCParametersDatum = (
+  cbor: string,
+  network: NetworkName
+): Parameters => {
   const decoded = decodeTxOutputDatum(cbor);
   if (!decoded.data) throw new Error("Parameter Datum Cbor is not correct");
-  const listData = expectListData(decoded.data, "Parameter Datum must be List");
-  const marketplaceAddressData = expectByteArrayData(
-    listData.items[0],
-    "Marketplace Address Data must be ByteArray"
-  );
-  const authorizersData = expectListData(
-    listData.items[1],
-    "Authorizers Data must be List"
-  );
 
-  const marketplaceAddress = makeAddress(marketplaceAddressData).toBech32();
-  const authorizers: string[] = authorizersData.items.map((item) =>
-    expectByteArrayData(item, "Authorizer Data must be ByteArray").toHex()
+  const listData = expectListData(decoded.data, "Parameters must be List");
+
+  const marketplaceAddress = decodeAddressFromData(listData.items[0], network);
+
+  const authorizersListData = expectListData(
+    listData.items[1],
+    "Authorizers must be List"
+  );
+  const authorizers: string[] = authorizersListData.items.map((item) =>
+    expectByteArrayData(item, "Authorizers item must be ByteArray").toHex()
   );
 
   return {
-    marketplaceAddress,
+    marketplaceAddress: marketplaceAddress.toString(),
     authorizers,
   };
 };

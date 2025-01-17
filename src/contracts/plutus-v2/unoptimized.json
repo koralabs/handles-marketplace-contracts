@@ -1,7 +1,7 @@
 {
   "preamble": {
-    "title": "golddyev/marketplace-sc-old",
-    "description": "Aiken contracts for project 'golddyev/marketplace-sc-old'",
+    "title": "koralabs/handles-marketplace-contracts",
+    "description": "Aiken contracts for project 'koralabs/handles-marketplace-contracts'",
     "version": "0.0.0",
     "plutusVersion": "v2",
     "compiler": {
