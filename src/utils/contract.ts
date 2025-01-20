@@ -6,9 +6,9 @@ import { Result } from "ts-res";
 
 import { optimizedCompiledCode } from "../contracts/plutus-v2/contract.js";
 import { makeSCParametersUplcValues } from "../datum.js";
-import { deployedScripts } from "../deployed/index.js";
 import { mayFail, mayFailAsync } from "../helpers/index.js";
 import { Parameters } from "../types.js";
+import { fetchApi } from "./api.js";
 
 const NETWORK_PARAMETER_URL = (network: NetworkName) =>
   `https://network-status.helios-lang.io/${network}/config`;
@@ -41,7 +41,16 @@ const fetchDeployedScript = async (
   network: NetworkName
 ): Promise<ScriptDetails> => {
   try {
-    return Object.values(deployedScripts[network])[0];
+    const result = await fetchApi(
+      `scripts?latest=true&type=marketplace_contract`
+    );
+    if (!result.ok) {
+      const error = await result.json();
+      throw new Error(error);
+    }
+
+    const data = (await result.json()) as unknown as ScriptDetails;
+    return data;
   } catch {
     throw new Error(`Not deployed on ${network}`);
   }
