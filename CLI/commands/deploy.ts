@@ -2,10 +2,10 @@ import { bytesToHex } from "@helios-lang/codec-utils";
 import { makeAddress } from "@helios-lang/ledger";
 
 import { loadConfig } from "../../src/config.js";
-import { AUTHORIZERS, MARKETPLACE_ADDRESS } from "../../src/constants/index.js";
 import { deploy, DeployConfig } from "../../src/deploy.js";
 import { getBlockfrostApi } from "../../src/helpers/index.js";
 import program from "../cli.js";
+import { configs as parametersConfig } from "../configs/index.js";
 import { getSeed } from "../utils.js";
 
 const deployCommand = program
@@ -19,6 +19,10 @@ const deployCommand = program
     if (!configResult.ok) return program.error(configResult.error);
     const config = configResult.data;
 
+    const parameters = parametersConfig[config.network];
+    if (!parameters)
+      return program.error(`Parameters not set for ${config.network}`);
+
     const blockfrostApi = getBlockfrostApi(config.blockfrostApiKey);
     const utxos = await blockfrostApi.getUtxos(makeAddress(bech32Address));
     const cborUtxos = utxos.map((utxo) => bytesToHex(utxo.toCbor(true)));
@@ -26,10 +30,7 @@ const deployCommand = program
       handleName,
       changeBech32Address: bech32Address,
       cborUtxos,
-      parameters: {
-        marketplaceAddress: MARKETPLACE_ADDRESS,
-        authorizers: AUTHORIZERS,
-      },
+      parameters,
       seed,
     };
 
