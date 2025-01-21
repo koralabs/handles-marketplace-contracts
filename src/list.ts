@@ -12,7 +12,7 @@ import { ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID } from "./constants/index.js";
-import { buildDatum, decodeSCParametersDatum } from "./datum.js";
+import { buildDatum, decodeSCParametersDatumCbor } from "./datum.js";
 import { mayFail, mayFailAsync } from "./helpers/index.js";
 import { Payout, SuccessResult } from "./types.js";
 import { fetchDeployedScript, fetchNetworkParameters } from "./utils/index.js";
@@ -76,7 +76,7 @@ const list = async (
 
   // decode parameter
   const parametersResult = mayFail(() =>
-    decodeSCParametersDatum(datumCbor, network)
+    decodeSCParametersDatumCbor(datumCbor, network)
   );
   if (!parametersResult.ok)
     return Err(

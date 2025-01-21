@@ -205,7 +205,7 @@ const buildSCParametersDatum = (
   return makeInlineTxOutputDatum(data);
 };
 
-const decodeSCParametersDatum = (
+const decodeSCParametersDatumCbor = (
   cbor: string,
   network: NetworkName
 ): Parameters => {
@@ -235,6 +235,6 @@ export {
   buildDatumTag,
   buildSCParametersDatum,
   decodeDatum,
-  decodeSCParametersDatum,
+  decodeSCParametersDatumCbor,
   makeSCParametersUplcValues,
 };

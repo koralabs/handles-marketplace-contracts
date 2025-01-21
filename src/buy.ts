@@ -18,7 +18,7 @@ import { HANDLE_POLICY_ID, MIN_LOVELACE } from "./constants/index.js";
 import {
   buildDatumTag,
   decodeDatum,
-  decodeSCParametersDatum,
+  decodeSCParametersDatumCbor,
 } from "./datum.js";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers/index.js";
 import { Buy } from "./redeemer.js";
@@ -116,7 +116,7 @@ const buy = async (
 
   // decode parameter
   const parametersResult = mayFail(() =>
-    decodeSCParametersDatum(datumCbor, network)
+    decodeSCParametersDatumCbor(datumCbor, network)
   );
   if (!parametersResult.ok)
     return Err(
@@ -299,7 +299,7 @@ const buyWithAuth = async (
 
   // decode parameter
   const parametersResult = mayFail(() =>
-    decodeSCParametersDatum(datumCbor, network)
+    decodeSCParametersDatumCbor(datumCbor, network)
   );
   if (!parametersResult.ok)
     return Err(
