@@ -1,6 +1,6 @@
 {
   "name": "@koralabs/handles-marketplace-contracts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.",
   "main": "index.js",
   "type": "module",
