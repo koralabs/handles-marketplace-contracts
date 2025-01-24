@@ -128,8 +128,8 @@ const list = async (
   const listingHandleOutput = makeTxOutput(
     makeAddress(
       isMainnet,
-      makeValidatorHash(uplcProgram.hash())
-      // changeAddress.stakingCredential, // when listed NFT needs to be under user's staking credential
+      makeValidatorHash(uplcProgram.hash()),
+      changeAddress.stakingCredential // when listed NFT needs to be under user's staking credential
     ),
     handleValue,
     listingDatumResult.data
