@@ -12,7 +12,7 @@ import { ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Ok, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID } from "./constants/index.js";
-import { buildDatum, decodeSCParametersDatum } from "./datum.js";
+import { buildDatum, decodeSCParametersDatumCbor } from "./datum.js";
 import { mayFail, mayFailAsync } from "./helpers/index.js";
 import { Payout, SuccessResult } from "./types.js";
 import { fetchDeployedScript, fetchNetworkParameters } from "./utils/index.js";
@@ -75,7 +75,9 @@ const list = async (
   const networkParameters = networkParametersResult.data;
 
   // decode parameter
-  const parametersResult = mayFail(() => decodeSCParametersDatum(datumCbor));
+  const parametersResult = mayFail(() =>
+    decodeSCParametersDatumCbor(datumCbor, network)
+  );
   if (!parametersResult.ok)
     return Err(
       new Error(
@@ -126,8 +128,8 @@ const list = async (
   const listingHandleOutput = makeTxOutput(
     makeAddress(
       isMainnet,
-      makeValidatorHash(uplcProgram.hash())
-      // changeAddress.stakingCredential, // when listed NFT needs to be under user's staking credential
+      makeValidatorHash(uplcProgram.hash()),
+      changeAddress.stakingCredential // when listed NFT needs to be under user's staking credential
     ),
     handleValue,
     listingDatumResult.data
