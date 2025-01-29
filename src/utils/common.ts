@@ -1,14 +1,18 @@
-import { Command } from "commander";
-import { Decimal } from "decimal.js";
-import Enquirer from "enquirer";
-import { Err, Ok, Result } from "ts-res";
+import { bytesToHex, hexToBytes } from "@helios-lang/codec-utils";
+import {
+  makeAddress,
+  makeAssets,
+  makeInlineTxOutputDatum,
+  makeTxInput,
+  makeTxOutput,
+  makeTxOutputId,
+  makeValue,
+  TxInput,
+} from "@helios-lang/ledger";
+import { decodeUplcData } from "@helios-lang/uplc";
+import { IUTxO } from "@koralabs/kora-labs-common";
 
-const sleep = async (milliseconds: number): Promise<void> => {
-  await new Promise((resolve) => setTimeout(() => resolve(true), milliseconds));
-};
-
-const adaToLovelace = (ada: number): bigint =>
-  BigInt(new Decimal(ada).mul(Math.pow(10, 6)).floor().toString());
+import { HANDLE_POLICY_ID } from "../constants/index.js";
 
 const bigIntMin = (...args: bigint[]): bigint => {
   return args.reduce((min, e) => {
@@ -22,38 +26,44 @@ const bigIntMax = (...args: bigint[]): bigint => {
   }, args[0]);
 };
 
-const requestSeed = async (): Promise<Result<string, string>> => {
-  try {
-    const enquirer = new Enquirer();
-    const response = await enquirer.prompt({
-      type: "password",
-      name: "seed",
-      message: "Enter seed phrase for funding wallet:\n",
-    });
-
-    if (
-      !(
-        response &&
-        "seed" in response &&
-        typeof response.seed == "string" &&
-        response.seed.trim()
-      )
-    ) {
-      return Err("Input seed correctly.");
-    }
-
-    return Ok(response.seed.trim());
-  } catch {
-    return Err("Input seed correctly");
-  }
+const sleep = async (milliseconds: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(() => resolve(true), milliseconds));
 };
 
-const getSeed = async (program: Command, seed?: string): Promise<string> => {
-  if (seed) return seed;
-  const seedResult = await requestSeed();
-  if (!seedResult.ok) program.error(seedResult.error);
+const makeListingTxInputFromListingIUTxO = (
+  listingIUtxo: IUTxO,
+  handleHex: string
+): TxInput =>
+  makeTxInput(
+    makeTxOutputId(`${listingIUtxo.tx_id}#${listingIUtxo.index}`),
+    makeTxOutput(
+      makeAddress(listingIUtxo.address),
+      makeValue(
+        BigInt(listingIUtxo.lovelace),
+        makeAssets([[HANDLE_POLICY_ID, [[handleHex, 1n]]]])
+      ),
+      listingIUtxo.datum
+        ? makeInlineTxOutputDatum(
+            decodeUplcData(hexToBytes(listingIUtxo.datum))
+          )
+        : undefined
+    )
+  );
 
-  return seedResult.data;
+const convertTxInputToIUTxO = (txInput: TxInput): IUTxO => ({
+  address: txInput.address.toString(),
+  tx_id: txInput.id.txId.toHex(),
+  index: txInput.id.index,
+  lovelace: Number(txInput.value.lovelace),
+  datum: txInput.datum?.data
+    ? bytesToHex(txInput.datum.data.toCbor())
+    : undefined,
+});
+
+export {
+  bigIntMax,
+  bigIntMin,
+  convertTxInputToIUTxO,
+  makeListingTxInputFromListingIUTxO,
+  sleep,
 };
-
-export { adaToLovelace, bigIntMax, bigIntMin, getSeed, sleep };

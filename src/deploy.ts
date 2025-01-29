@@ -11,6 +11,7 @@ import {
   makeSigScript,
   makeTxOutput,
   makeTxOutputId,
+  makeValidatorHash,
   makeValue,
   Tx,
 } from "@helios-lang/ledger";
@@ -104,12 +105,19 @@ const deploy = async (
     makeSigScript(changeAddress.spendingCredential.toHex()),
   ]);
 
-  console.log({ lockerScript: bytesToHex(lockerScript.toCbor()) });
-
   const lockerScriptAddress = makeAddress(
     isMainnet,
-    makePubKeyHash(hashNativeScript(lockerScript))
+    makeValidatorHash(hashNativeScript(lockerScript))
   );
+
+  // log lockerScript detail to unlock
+  console.log({
+    lockerScript: {
+      script: bytesToHex(lockerScript.toCbor()),
+      type: "Native",
+      address: lockerScriptAddress.toString(),
+    },
+  });
 
   // deployed smart contract output
   const deployedTxOutputValue = makeValue(

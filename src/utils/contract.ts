@@ -2,13 +2,13 @@ import { NetworkParams } from "@helios-lang/ledger";
 import { NetworkName } from "@helios-lang/tx-utils";
 import { decodeUplcProgramV2FromCbor, UplcProgramV2 } from "@helios-lang/uplc";
 import { ScriptDetails } from "@koralabs/kora-labs-common";
-import { makeSCParametersUplcValues } from "datum.js";
 import { Result } from "ts-res";
 
 import { optimizedCompiledCode } from "../contracts/plutus-v2/contract.js";
-import { deployedScripts } from "../deployed/index.js";
+import { makeSCParametersUplcValues } from "../datum.js";
 import { mayFail, mayFailAsync } from "../helpers/index.js";
 import { Parameters } from "../types.js";
+import { fetchApi } from "./api.js";
 
 const NETWORK_PARAMETER_URL = (network: NetworkName) =>
   `https://network-status.helios-lang.io/${network}/config`;
@@ -40,7 +40,20 @@ const getUplcProgram = async (
 const fetchDeployedScript = async (
   network: NetworkName
 ): Promise<ScriptDetails> => {
-  return Object.values(deployedScripts[network])[0];
+  try {
+    const result = await fetchApi(
+      `scripts?latest=true&type=marketplace_contract`
+    );
+    if (!result.ok) {
+      const error = await result.json();
+      throw new Error(error);
+    }
+
+    const data = (await result.json()) as unknown as ScriptDetails;
+    return data;
+  } catch {
+    throw new Error(`Not deployed on ${network}`);
+  }
 };
 
 export { fetchDeployedScript, fetchNetworkParameters, getUplcProgram };

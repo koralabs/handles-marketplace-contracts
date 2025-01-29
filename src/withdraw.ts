@@ -10,7 +10,7 @@ import {
 } from "@helios-lang/ledger";
 import { makeTxBuilder, NetworkName } from "@helios-lang/tx-utils";
 import { decodeUplcProgramV2FromCbor } from "@helios-lang/uplc";
-import { ScriptDetails } from "@koralabs/kora-labs-common";
+import { IUTxO, ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID } from "./constants/index.js";
@@ -18,7 +18,10 @@ import { decodeDatum } from "./datum.js";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers/index.js";
 import { WithdrawOrUpdate } from "./redeemer.js";
 import { BuildTxError, SuccessResult } from "./types.js";
-import { fetchDeployedScript } from "./utils/contract.js";
+import {
+  fetchDeployedScript,
+  makeListingTxInputFromListingIUTxO,
+} from "./utils/index.js";
 
 /**
  * Configuration of function to withdraw handle
@@ -28,7 +31,7 @@ import { fetchDeployedScript } from "./utils/contract.js";
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
  * @property {string} handleHex Handle name's hex format (asset name label is also included)
- * @property {string} listingCborUtxo UTxO (cbor format) where this handle is listed
+ * @property {IUTxO} listingIUtxo UTxO where this handle is listed
  * @property {ScriptDetails | undefined} customRefScriptDetail Custom Reference Script Detail
  */
 interface WithdrawConfig {
@@ -36,7 +39,7 @@ interface WithdrawConfig {
   cborUtxos: string[];
   collateralCborUtxo?: string | null;
   handleHex: string;
-  listingCborUtxo: string;
+  listingIUtxo: IUTxO;
   customRefScriptDetail?: ScriptDetails;
 }
 
@@ -56,7 +59,7 @@ const withdraw = async (
     changeBech32Address,
     cborUtxos,
     collateralCborUtxo,
-    listingCborUtxo,
+    listingIUtxo,
     handleHex,
     customRefScriptDetail,
   } = config;
@@ -102,7 +105,10 @@ const withdraw = async (
   const txBuilder = makeTxBuilder({ isMainnet });
   const changeAddress = makeAddress(changeBech32Address);
   const spareUtxos = cborUtxos.map(decodeTxInput);
-  const listingUtxo = decodeTxInput(listingCborUtxo);
+  const listingUtxo = makeListingTxInputFromListingIUTxO(
+    listingIUtxo,
+    handleHex
+  );
   const handleValue = makeValue(
     0n,
     makeAssets([[HANDLE_POLICY_ID, [[handleHex, 1n]]]])

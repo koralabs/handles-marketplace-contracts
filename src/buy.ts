@@ -11,14 +11,14 @@ import {
 } from "@helios-lang/ledger";
 import { makeTxBuilder, NetworkName } from "@helios-lang/tx-utils";
 import { decodeUplcProgramV2FromCbor } from "@helios-lang/uplc";
-import { ScriptDetails } from "@koralabs/kora-labs-common";
+import { IUTxO, ScriptDetails } from "@koralabs/kora-labs-common";
 import { Err, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID, MIN_LOVELACE } from "./constants/index.js";
 import {
   buildDatumTag,
   decodeDatum,
-  decodeSCParametersDatum,
+  decodeSCParametersDatumCbor,
 } from "./datum.js";
 import { mayFail, mayFailAsync, mayFailTransaction } from "./helpers/index.js";
 import { Buy } from "./redeemer.js";
@@ -27,6 +27,7 @@ import {
   bigIntMax,
   fetchDeployedScript,
   fetchNetworkParameters,
+  makeListingTxInputFromListingIUTxO,
 } from "./utils/index.js";
 
 /**
@@ -37,7 +38,7 @@ import {
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string | undefined | null} collateralCborUtxo Collateral UTxO. Can be null, then we will select one in function
  * @property {string} handleHex Handle name's hex format (asset name label is also included)
- * @property {string} listingCborUtxo CBOR UTxO where this handle is listed
+ * @property {IUTxO} listingIUtxo UTxO where this handle is listed
  * @property {ScriptDetails | undefined} customRefScriptDetail Custom Reference Script Detail
  */
 interface BuyConfig {
@@ -45,7 +46,7 @@ interface BuyConfig {
   cborUtxos: string[];
   collateralCborUtxo?: string | null;
   handleHex: string;
-  listingCborUtxo: string;
+  listingIUtxo: IUTxO;
   customRefScriptDetail?: ScriptDetails;
 }
 
@@ -57,7 +58,7 @@ interface BuyConfig {
  * @property {string[]} cborUtxos UTxOs (cbor format) of wallet
  * @property {string | undefined | null} collateralCborUtxo Collateral CBOR UTxO. Can be null, then we will select one in function
  * @property {string} handleHex Handle name's hex format (asset name label is also included)
- * @property {string} listingCborUtxo CBOR UTxO where this handle is listed
+ * @property {IUTxO} listingIUtxo UTxO where this handle is listed
  * @property {string} authorizerPubKeyHash Pub Key Hash of authorizer
  * @property {ScriptDetails | undefined} customRefScriptDetail Custom Reference Script Detail
  */
@@ -66,7 +67,7 @@ interface BuyWithAuthConfig {
   cborUtxos: string[];
   collateralCborUtxo?: string | null;
   handleHex: string;
-  listingCborUtxo: string;
+  listingIUtxo: IUTxO;
   authorizerPubKeyHash: string;
   customRefScriptDetail?: ScriptDetails;
 }
@@ -87,7 +88,7 @@ const buy = async (
     changeBech32Address,
     cborUtxos,
     collateralCborUtxo,
-    listingCborUtxo,
+    listingIUtxo,
     handleHex,
     customRefScriptDetail,
   } = config;
@@ -114,7 +115,9 @@ const buy = async (
   const networkParameters = networkParametersResult.data;
 
   // decode parameter
-  const parametersResult = mayFail(() => decodeSCParametersDatum(datumCbor));
+  const parametersResult = mayFail(() =>
+    decodeSCParametersDatumCbor(datumCbor, network)
+  );
   if (!parametersResult.ok)
     return Err(
       new Error(
@@ -149,7 +152,10 @@ const buy = async (
   const txBuilder = makeTxBuilder({ isMainnet });
   const changeAddress = makeAddress(changeBech32Address);
   const spareUtxos = cborUtxos.map(decodeTxInput);
-  const listingUtxo = decodeTxInput(listingCborUtxo);
+  const listingUtxo = makeListingTxInputFromListingIUTxO(
+    listingIUtxo,
+    handleHex
+  );
   const handleValue = makeValue(
     0n,
     makeAssets([[HANDLE_POLICY_ID, [[handleHex, 1n]]]])
@@ -264,7 +270,7 @@ const buyWithAuth = async (
     changeBech32Address,
     cborUtxos,
     collateralCborUtxo,
-    listingCborUtxo,
+    listingIUtxo,
     handleHex,
     authorizerPubKeyHash,
     customRefScriptDetail,
@@ -292,7 +298,9 @@ const buyWithAuth = async (
   const networkParameters = networkParametersResult.data;
 
   // decode parameter
-  const parametersResult = mayFail(() => decodeSCParametersDatum(datumCbor));
+  const parametersResult = mayFail(() =>
+    decodeSCParametersDatumCbor(datumCbor, network)
+  );
   if (!parametersResult.ok)
     return Err(
       new Error(
@@ -335,7 +343,10 @@ const buyWithAuth = async (
   const txBuilder = makeTxBuilder({ isMainnet });
   const changeAddress = makeAddress(changeBech32Address);
   const spareUtxos = cborUtxos.map(decodeTxInput);
-  const listingUtxo = decodeTxInput(listingCborUtxo);
+  const listingUtxo = makeListingTxInputFromListingIUTxO(
+    listingIUtxo,
+    handleHex
+  );
   const handleValue = makeValue(
     0n,
     makeAssets([[HANDLE_POLICY_ID, [[handleHex, 1n]]]])

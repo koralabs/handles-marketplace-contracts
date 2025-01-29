@@ -5,8 +5,9 @@ import { AssetNameLabel } from "@koralabs/kora-labs-common";
 
 import { loadConfig } from "../../src/config.js";
 import { update, UpdateConfig } from "../../src/update.js";
-import { adaToLovelace } from "../../src/utils/common.js";
+import { convertTxInputToIUTxO } from "../../src/utils/index.js";
 import program from "../cli.js";
+import { adaToLovelace } from "../utils.js";
 
 const updateCommand = program
   .command("update")
@@ -56,7 +57,7 @@ const updateCommand = program
             amountLovelace: adaToLovelace(Number(newPriceString) * 0.1),
           },
         ],
-        listingCborUtxo: bytesToHex(listingUtxo.toCbor(true)),
+        listingIUtxo: convertTxInputToIUTxO(listingUtxo),
       };
 
       const txResult = await update(updateConfig, config.network);
