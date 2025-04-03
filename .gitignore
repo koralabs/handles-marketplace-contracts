@@ -69,3 +69,4 @@ lib
 
 # plutus.json
 plutus.json
+.env*

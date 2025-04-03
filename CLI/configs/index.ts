@@ -1,6 +1,10 @@
 import { Parameters } from "../../src/types.js";
 
 export const configs: Record<string, Parameters> = {
+  mainnet: {
+    marketplaceAddress: "",
+    authorizers: [""],
+  },
   preprod: {
     marketplaceAddress:
       "addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf",
