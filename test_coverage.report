@@ -1,0 +1,31 @@
+
+ RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
+      Coverage enabled with v8
+
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  23:17:26
+   Duration  336ms (transform 32ms, setup 0ms, collect 34ms, tests 4ms, environment 0ms, prepare 59ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |     100 |      100 |     100 |     100 |                   
+ common            |     100 |      100 |     100 |     100 |                   
+  invariant.ts     |     100 |      100 |     100 |     100 |                   
+ error             |     100 |      100 |     100 |     100 |                   
+  convert.ts       |     100 |      100 |     100 |     100 |                   
+  handleable.ts    |     100 |      100 |     100 |     100 |                   
+  ...eableAsync.ts |     100 |      100 |     100 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------
+Coverage threshold met (line=100%, branch=100%).
