@@ -60,6 +60,8 @@ artifacts/
 build/
 # Aiken's default documentation export
 docs/
+!docs/
+!docs/**/*.md
 
 # env files
 .env*.local

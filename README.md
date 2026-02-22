@@ -1,5 +1,14 @@
 # marketplace-sc
 
+## Documentation
+- [Docs Index](./docs/index.md)
+- [Product Docs](./docs/product/index.md)
+- [Spec Docs](./docs/spec/index.md)
+
+## Local Validation
+- `npm test`
+- `./test_coverage.sh`
+
 Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.
 
 For example, as `validators/always_true.ak`
