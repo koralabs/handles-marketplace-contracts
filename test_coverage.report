@@ -1,3 +1,16 @@
+FORMAT_VERSION=1
+REPO=handles-marketplace-contracts
+TIMESTAMP_UTC=2026-02-22T16:34:07Z
+THRESHOLD_LINES=90
+THRESHOLD_BRANCHES=90
+TOTAL_LINES_PCT=100
+TOTAL_BRANCHES_PCT=100
+STATUS=pass
+SOURCE_PATHS=src/helpers/common/invariant.ts,src/helpers/error/convert.ts,src/helpers/error/handleable.ts,src/helpers/error/handleableAsync.ts
+EXCLUDED_PATHS=NON_CRITICAL_RUNTIME_PATHS:covered_by_separate_suites
+LANGUAGE_SUMMARY=nodejs:lines=100,branches=100,tool=vitest-v8,status=pass
+
+=== RAW_OUTPUT_VITEST ===
 
  RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
       Coverage enabled with v8
@@ -13,8 +26,8 @@
 
  Test Files  1 passed (1)
       Tests  8 passed (8)
-   Start at  23:17:26
-   Duration  336ms (transform 32ms, setup 0ms, collect 34ms, tests 4ms, environment 0ms, prepare 59ms)
+   Start at  08:34:07
+   Duration  338ms (transform 35ms, setup 0ms, collect 36ms, tests 5ms, environment 0ms, prepare 61ms)
 
  % Coverage report from v8
 -------------------|---------|----------|---------|---------|-------------------
@@ -28,4 +41,3 @@ All files          |     100 |      100 |     100 |     100 |
   handleable.ts    |     100 |      100 |     100 |     100 |                   
   ...eableAsync.ts |     100 |      100 |     100 |     100 |                   
 -------------------|---------|----------|---------|---------|-------------------
-Coverage threshold met (line=100%, branch=100%).
