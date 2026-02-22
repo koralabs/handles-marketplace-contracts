@@ -50,5 +50,14 @@
   - `tests/marketplace.test.ts`.
 - Helper unit coverage:
   - `tests/errorHelpers.test.ts`.
+  - `tests/datum.test.ts`.
 - Guardrail:
-  - `./test_coverage.sh` outputs `./test_coverage.report` and enforces >=90% lines/branches.
+  - `./test_coverage.sh` runs standard entrypoints (`npm test`, `npm run test:aiken`) and writes `./test_coverage.report`.
+  - Measured Node coverage scope enforces >=90% lines/branches across:
+    - `src/datum.ts`, `src/redeemer.ts`
+    - `src/helpers/common/invariant.ts`
+    - `src/helpers/error/{convert.ts,handleable.ts,handleableAsync.ts,tx.ts,index.ts}`
+    - `src/helpers/index.ts`
+    - `src/contracts/plutus-v2/contract.ts`
+    - `src/utils/index.ts`
+  - Aiken metrics are recorded as `NA` when local toolchain incompatibility prevents deterministic `aiken check` execution.

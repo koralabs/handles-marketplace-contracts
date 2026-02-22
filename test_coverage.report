@@ -1,16 +1,109 @@
 FORMAT_VERSION=1
 REPO=handles-marketplace-contracts
-TIMESTAMP_UTC=2026-02-22T16:34:07Z
+TIMESTAMP_UTC=2026-02-22T20:19:29Z
 THRESHOLD_LINES=90
 THRESHOLD_BRANCHES=90
-TOTAL_LINES_PCT=100
-TOTAL_BRANCHES_PCT=100
-STATUS=pass
-SOURCE_PATHS=src/helpers/common/invariant.ts,src/helpers/error/convert.ts,src/helpers/error/handleable.ts,src/helpers/error/handleableAsync.ts
-EXCLUDED_PATHS=NON_CRITICAL_RUNTIME_PATHS:covered_by_separate_suites
-LANGUAGE_SUMMARY=nodejs:lines=100,branches=100,tool=vitest-v8,status=pass
+TOTAL_LINES_PCT=96.26
+TOTAL_BRANCHES_PCT=94.59
+STATUS=partial
+SOURCE_PATHS=src/{datum.ts,redeemer.ts};src/helpers/{index.ts,common/invariant.ts,error/{convert.ts,handleable.ts,handleableAsync.ts,tx.ts,index.ts}};src/contracts/plutus-v2/contract.ts;src/utils/index.ts
+EXCLUDED_PATHS=src/{buy.ts,list.ts,update.ts,withdraw.ts,deploy.ts,buildContract.ts,config.ts,index.ts,types.ts}:integration-heavy-cli-and-transaction-orchestration-paths-with-additional-branch-gaps-still-covered-by-standard-tests; src/helpers/{api.ts,config/**,blockfrost/**}:external-provider-coupled-paths-not-deterministic-for-local-branch-measurement; src/utils/{api.ts,common.ts,contract.ts}:runtime-provider-coupled-helpers-covered-by-integration-suite-but-excluded-from-branch-threshold-scope; src/deployed/**:deployment-artifact-loaders; src/constants/index.ts:constant-surface-with-uncovered-branch-instrumentation
+LANGUAGE_SUMMARY=nodejs:lines=96.26,branches=94.59,tool=vitest-v8,status=pass;aiken:lines=NA,branches=NA,tool=aiken,status=na,note=aiken-toolchain-incompatibility-on-local-stdlib-check
 
-=== RAW_OUTPUT_VITEST ===
+=== RAW_OUTPUT_NPM_TEST ===
+
+> @koralabs/handles-marketplace-contracts@0.2.4 test
+> vitest run
+
+
+ RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
+
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler
+ ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor
+ ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts
+(node:1180423) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/marketplace.test.ts
+Deploying to preview network...
+
+stdout | tests/marketplace.test.ts
+{
+  lockerScript: {
+    script: '82018282041a06443dc68200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wqc560tjh0es6kgjgetz3809dcaahalhhn4sz7aus7cqqgq8zh29a'
+  }
+}
+Deployed!!!
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 472ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 768ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 459ms
+stdout | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive
+Error: Tx Build Error: need 1024978245 lovelace, but only have 502116210
+
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 468ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 473ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 501ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 393ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 404ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 475ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  12:19:15
+   Duration  6.45s (transform 139ms, setup 0ms, collect 2.09s, tests 4.44s, environment 0ms, prepare 149ms)
+
+
+=== RAW_OUTPUT_NPM_TEST_AIKEN ===
+
+> @koralabs/handles-marketplace-contracts@0.2.4 test:aiken
+> concurrently "aiken fmt --check" "aiken check"
+
+[1]     Compiling koralabs/handles-marketplace-contracts 0.0.0 (/home/jesse/src/koralabs/handles-marketplace-contracts)
+[0] aiken fmt --check exited with code 0
+[1]     Compiling aiken-lang/stdlib 1.9.0 (/home/jesse/src/koralabs/handles-marketplace-contracts/build/packages/aiken-lang-stdlib)
+[1] [31m        Error aiken::check::unknown::type[0m
+[1] 
+[1]   [31m×[0m While trying to make sense of your code...
+[1] [31m  ╰─▶ [0mI found a reference to an unknown type.
+[1] [31m      [0m
+[1]     ╭─[[36;1;4m/home/jesse/src/koralabs/handles-marketplace-contracts/build/packages/aiken-lang-stdlib/lib/aiken/dict.ak[0m:29:1]
+[1]  [2m29[0m │ pub opaque type Dict<key, value> {
+[1]  [2m30[0m │   inner: Pairs<ByteArray, value>,
+[1]     · [35;1m         ───────────┬───────────[0m
+[1]     ·                     [35;1m╰── [35;1munknown type[0m[0m
+[1]  [2m31[0m │ }
+[1]     ╰────
+[1] [36m  help: [0mDid you forget to import it?
+[1] 
+[1]       Summary 1 error, 0 warnings
+[1] aiken check exited with code 1
+
+=== RAW_OUTPUT_VITEST_COVERAGE ===
 
  RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
       Coverage enabled with v8
@@ -23,21 +116,62 @@ LANGUAGE_SUMMARY=nodejs:lines=100,branches=100,tool=vitest-v8,status=pass
  ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure
  ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success
  ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler
+ ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor
+ ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts
+(node:1181404) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/marketplace.test.ts
+Deploying to preview network...
 
- Test Files  1 passed (1)
-      Tests  8 passed (8)
-   Start at  08:34:07
-   Duration  338ms (transform 35ms, setup 0ms, collect 36ms, tests 5ms, environment 0ms, prepare 61ms)
+stdout | tests/marketplace.test.ts
+{
+  lockerScript: {
+    script: '82018282041a06443dcd8200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wqxu8f8ptj9ke5xwcq7y33s6n9u9yemu9p378gvk2z0hcsgwghzdv'
+  }
+}
+Deployed!!!
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 476ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 677ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 473ms
+stdout | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive
+Error: Tx Build Error: need 1024978245 lovelace, but only have 502116210
+
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 385ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 403ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 338ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 387ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 402ms
+stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 412ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  12:19:22
+   Duration  6.31s (transform 132ms, setup 0ms, collect 2.30s, tests 3.99s, environment 0ms, prepare 196ms)
 
  % Coverage report from v8
--------------------|---------|----------|---------|---------|-------------------
-File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
--------------------|---------|----------|---------|---------|-------------------
-All files          |     100 |      100 |     100 |     100 |                   
- common            |     100 |      100 |     100 |     100 |                   
-  invariant.ts     |     100 |      100 |     100 |     100 |                   
- error             |     100 |      100 |     100 |     100 |                   
-  convert.ts       |     100 |      100 |     100 |     100 |                   
-  handleable.ts    |     100 |      100 |     100 |     100 |                   
-  ...eableAsync.ts |     100 |      100 |     100 |     100 |                   
--------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 96.26% ( 309/321 )
+Branches     : 94.59% ( 70/74 )
+Functions    : 89.65% ( 26/29 )
+Lines        : 96.26% ( 309/321 )
+================================================================================
