@@ -72,3 +72,6 @@ lib
 # plutus.json
 plutus.json
 .env*
+
+# K.O.R.A executor logs
+.kora/executor-logs/
