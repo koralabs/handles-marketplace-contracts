@@ -30,8 +30,11 @@ describe("deployment state loader", () => {
       kind: "validator",
       parameters: {
         marketplaceAddress:
-          "addr_test1vr0examplemarketplace0000000000000000000000000000000000000",
-        authorizers: ["authorizer_key_hash_1", "authorizer_key_hash_2"],
+          "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
+        authorizers: [
+          "11111111111111111111111111111111111111111111111111111111",
+          "22222222222222222222222222222222222222222222222222222222",
+        ],
       },
     });
     expect(state.subhandleStrategy).toEqual({
@@ -42,8 +45,11 @@ describe("deployment state loader", () => {
       type: "marketplace_settings",
       values: {
         marketplaceAddress:
-          "addr_test1vr0examplemarketplace0000000000000000000000000000000000000",
-        authorizers: ["authorizer_key_hash_1", "authorizer_key_hash_2"],
+          "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
+        authorizers: [
+          "11111111111111111111111111111111111111111111111111111111",
+          "22222222222222222222222222222222222222222222222222222222",
+        ],
       },
     });
   });
@@ -63,7 +69,7 @@ build:
   parameters:
     marketplace_address: addr_test1foo
     authorizers:
-      - authorizer_key_hash_1
+      - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
@@ -92,7 +98,7 @@ build:
   parameters:
     marketplace_address: addr_test1foo
     authorizers:
-      - authorizer_key_hash_1
+      - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
@@ -124,7 +130,7 @@ settings:
   values:
     marketplace_address: addr_test1foo
     authorizers:
-      - authorizer_key_hash_1
+      - "11111111111111111111111111111111111111111111111111111111"
         `,
         "missing build parameters"
       )
@@ -148,7 +154,7 @@ build:
   parameters:
     marketplace_address: addr_test1build
     authorizers:
-      - authorizer_key_hash_1
+      - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
@@ -157,7 +163,7 @@ settings:
   values:
     marketplace_address: addr_test1settings
     authorizers:
-      - authorizer_key_hash_1
+      - "11111111111111111111111111111111111111111111111111111111"
         `,
         "mismatched values"
       )

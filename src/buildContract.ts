@@ -16,7 +16,17 @@ export interface BuildContractConfig {
   parameters: Parameters;
 }
 
-export const buildContract = ({ parameters }: BuildContractConfig) => {
+export interface BuiltContractArtifacts {
+  validatorAddress: string;
+  validatorHash: string;
+  cbor: string;
+  unoptimizedCbor: string;
+  datumCbor: string;
+}
+
+export const buildContractArtifacts = ({
+  parameters,
+}: BuildContractConfig): BuiltContractArtifacts => {
   const parametersUplcValues = makeSCParametersUplcValues(parameters);
   const parametersDatum = buildSCParametersDatum(
     makeAddress(parameters.marketplaceAddress),
@@ -36,20 +46,31 @@ export const buildContract = ({ parameters }: BuildContractConfig) => {
     uplcProgramValidatorHash
   );
 
+  return {
+    validatorAddress: uplcProgramValidatorAddress.toBech32(),
+    validatorHash: Buffer.from(uplcProgramHash).toString("hex"),
+    cbor: Buffer.from(uplcProgram.toCbor()).toString("hex"),
+    unoptimizedCbor: Buffer.from(unoptimizedUplcProgram.toCbor()).toString(
+      "hex"
+    ),
+    datumCbor: Buffer.from(parametersDatum.toCbor()).toString("hex"),
+  };
+};
+
+export const buildContract = ({ parameters }: BuildContractConfig) => {
+  const artifacts = buildContractArtifacts({ parameters });
   console.log(
     "SCRIPT",
     JSON.stringify({
-      [uplcProgramValidatorAddress.toBech32()]: {
+      [artifacts.validatorAddress]: {
         handle: "marketplace@handle_scripts",
         handleHex:
           "000de1406d61726b6574706c6163654068616e646c655f73637269707473",
         type: "ScriptType.MARKETPLACE_CONTRACT",
-        validatorHash: Buffer.from(uplcProgramHash).toString("hex"),
-        cbor: Buffer.from(uplcProgram.toCbor()).toString("hex"),
-        unoptimizedCbor: Buffer.from(unoptimizedUplcProgram.toCbor()).toString(
-          "hex"
-        ),
-        datumCbor: Buffer.from(parametersDatum.toCbor()).toString("hex"),
+        validatorHash: artifacts.validatorHash,
+        cbor: artifacts.cbor,
+        unoptimizedCbor: artifacts.unoptimizedCbor,
+        datumCbor: artifacts.datumCbor,
         latest: true,
         refScriptAddress: null,
         refScriptUtxo: null,

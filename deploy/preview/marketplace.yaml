@@ -5,17 +5,17 @@ build:
   target: validators/marketplace.ak
   kind: validator
   parameters:
-    marketplace_address: addr_test1vr0examplemarketplace0000000000000000000000000000000000000
+    marketplace_address: addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9
     authorizers:
-      - authorizer_key_hash_1
-      - authorizer_key_hash_2
+      - "11111111111111111111111111111111111111111111111111111111"
+      - "22222222222222222222222222222222222222222222222222222222"
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
   values:
-    marketplace_address: addr_test1vr0examplemarketplace0000000000000000000000000000000000000
+    marketplace_address: addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9
     authorizers:
-      - authorizer_key_hash_1
-      - authorizer_key_hash_2
+      - "11111111111111111111111111111111111111111111111111111111"
+      - "22222222222222222222222222222222222222222222222222222222"
