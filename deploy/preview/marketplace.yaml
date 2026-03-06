@@ -10,7 +10,7 @@ build:
       - "11111111111111111111111111111111111111111111111111111111"
       - "22222222222222222222222222222222222222222222222222222222"
 subhandle_strategy:
-  namespace: handlecontracts
+  namespace: handlecontract
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings

@@ -25,7 +25,7 @@ const desiredState: DesiredDeploymentState = {
     },
   },
   subhandleStrategy: {
-    namespace: "handlecontracts",
+    namespace: "handlecontract",
     format: "contract_slug_ordinal",
   },
   settings: {
@@ -69,7 +69,7 @@ describe("deployment plan helpers", () => {
       expectedScriptHash,
       live: {
         currentScriptHash: expectedScriptHash,
-        currentSubhandle: "marketplace3@handlecontracts",
+        currentSubhandle: "marketplace3@handlecontract",
       },
       nextSubhandle: null,
     });
@@ -91,14 +91,14 @@ describe("deployment plan helpers", () => {
       expectedScriptHash,
       live: {
         currentScriptHash: "ab".repeat(28),
-        currentSubhandle: "marketplace3@handlecontracts",
+        currentSubhandle: "marketplace3@handlecontract",
       },
-      nextSubhandle: "marketplace4@handlecontracts",
+      nextSubhandle: "marketplace4@handlecontract",
     });
 
     expect(plan.driftType).toBe("script_hash_only");
     expect(plan.summaryJson.transaction_order).toEqual(["tx-01.cbor"]);
-    expect(plan.summaryMarkdown).toContain("`marketplace4@handlecontracts`");
+    expect(plan.summaryMarkdown).toContain("`marketplace4@handlecontract`");
   });
 
   test("fetches live marketplace deployment state from the Handles API", async () => {
@@ -113,7 +113,7 @@ describe("deployment plan helpers", () => {
         return new Response(
           JSON.stringify({
             validatorHash: "cd".repeat(28),
-            handle: "marketplace9@handlecontracts",
+            handle: "marketplace9@handlecontract",
           }),
           { status: 200 }
         );
@@ -122,7 +122,7 @@ describe("deployment plan helpers", () => {
 
     expect(state).toEqual({
       currentScriptHash: "cd".repeat(28),
-      currentSubhandle: "marketplace9@handlecontracts",
+      currentSubhandle: "marketplace9@handlecontract",
     });
     expect(requests).toEqual([
       {
@@ -133,29 +133,29 @@ describe("deployment plan helpers", () => {
   });
 
   test("discovers the next available contract SubHandle ordinal", async () => {
-    // Feature: script-hash deployments must allocate the next free <contract_slug><ordinal>@handlecontracts name.
+    // Feature: script-hash deployments must allocate the next free <contract_slug><ordinal>@handlecontract name.
     // Failure mode: workflow-generated plans could collide with an already published contract SubHandle.
     const requested: string[] = [];
     const subhandle = await discoverNextContractSubhandle({
       network: "preview",
       contractSlug: "marketplace",
-      namespace: "handlecontracts",
+      namespace: "handlecontract",
       userAgent: "codex-test",
       fetchFn: async (url) => {
         requested.push(String(url));
         const urlText = String(url);
         return new Response(
           JSON.stringify({ ok: true }),
-          { status: urlText.endsWith("marketplace3@handlecontracts") ? 404 : 200 }
+          { status: urlText.endsWith("marketplace3@handlecontract") ? 404 : 200 }
         );
       },
     });
 
-    expect(subhandle).toBe("marketplace3@handlecontracts");
+    expect(subhandle).toBe("marketplace3@handlecontract");
     expect(requested).toEqual([
-      "https://preview.api.handle.me/handles/marketplace1@handlecontracts",
-      "https://preview.api.handle.me/handles/marketplace2@handlecontracts",
-      "https://preview.api.handle.me/handles/marketplace3@handlecontracts",
+      "https://preview.api.handle.me/handles/marketplace1@handlecontract",
+      "https://preview.api.handle.me/handles/marketplace2@handlecontract",
+      "https://preview.api.handle.me/handles/marketplace3@handlecontract",
     ]);
   });
 });

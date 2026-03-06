@@ -38,7 +38,7 @@ describe("deployment state loader", () => {
       },
     });
     expect(state.subhandleStrategy).toEqual({
-      namespace: "handlecontracts",
+      namespace: "handlecontract",
       format: "contract_slug_ordinal",
     });
     expect(state.settings).toEqual({
@@ -71,7 +71,7 @@ build:
     authorizers:
       - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
-  namespace: handlecontracts
+  namespace: handlecontract
   format: contract_slug_ordinal
 current_script_hash: deadbeef
 settings:
@@ -100,7 +100,7 @@ build:
     authorizers:
       - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
-  namespace: handlecontracts
+  namespace: handlecontract
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
@@ -123,7 +123,7 @@ build:
   target: validators/marketplace.ak
   kind: validator
 subhandle_strategy:
-  namespace: handlecontracts
+  namespace: handlecontract
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
@@ -156,7 +156,7 @@ build:
     authorizers:
       - "11111111111111111111111111111111111111111111111111111111"
 subhandle_strategy:
-  namespace: handlecontracts
+  namespace: handlecontract
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
