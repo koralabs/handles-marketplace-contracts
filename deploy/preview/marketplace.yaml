@@ -4,12 +4,18 @@ contract_slug: marketplace
 build:
   target: validators/marketplace.ak
   kind: validator
+  parameters:
+    marketplace_address: addr_test1vr0examplemarketplace0000000000000000000000000000000000000
+    authorizers:
+      - authorizer_key_hash_1
+      - authorizer_key_hash_2
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
   values:
+    marketplace_address: addr_test1vr0examplemarketplace0000000000000000000000000000000000000
     authorizers:
       - authorizer_key_hash_1
       - authorizer_key_hash_2

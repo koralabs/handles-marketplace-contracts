@@ -27,13 +27,19 @@ contract_slug: marketplace
 build:
   target: validators/marketplace.ak
   kind: validator
+  parameters:
+    marketplace_address: addr_test1...
+    authorizers:
+      - <pub_key_hash>
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
   values:
-    # repo-owned datum/settings values only
+    marketplace_address: addr_test1...
+    authorizers:
+      - <pub_key_hash>
 ```
 
 Required stable fields:
@@ -42,10 +48,17 @@ Required stable fields:
 - `contract_slug`
 - `build.target`
 - `build.kind`
+- `build.parameters`
 - `subhandle_strategy.namespace`
 - `subhandle_strategy.format`
 - `settings.type`
 - `settings.values`
+
+For marketplace deployments, the desired YAML must carry the full validator parameter set in `build.parameters`. Today that means:
+- `build.parameters.marketplace_address`
+- `build.parameters.authorizers`
+
+Those same stable values should also appear in `settings.values` because they are part of the repo-owned desired on-chain marketplace settings datum.
 
 Observed-only fields that must not be committed into desired-state YAML:
 - `current_script_hash`
@@ -62,6 +75,8 @@ Deployment automation should:
 - load desired YAML from this repo,
 - read live chain state for the contract settings UTxO,
 - classify drift as `script_hash_only`, `settings_only`, or `script_hash_and_settings`.
+
+The expected script hash must be derived from committed `build.parameters`, not from operator-supplied workflow inputs.
 
 No deployment artifact should be created when desired and live state already match.
 

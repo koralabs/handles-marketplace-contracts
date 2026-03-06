@@ -28,6 +28,11 @@ describe("deployment state loader", () => {
     expect(state.build).toEqual({
       target: "validators/marketplace.ak",
       kind: "validator",
+      parameters: {
+        marketplaceAddress:
+          "addr_test1vr0examplemarketplace0000000000000000000000000000000000000",
+        authorizers: ["authorizer_key_hash_1", "authorizer_key_hash_2"],
+      },
     });
     expect(state.subhandleStrategy).toEqual({
       namespace: "handlecontracts",
@@ -36,6 +41,8 @@ describe("deployment state loader", () => {
     expect(state.settings).toEqual({
       type: "marketplace_settings",
       values: {
+        marketplaceAddress:
+          "addr_test1vr0examplemarketplace0000000000000000000000000000000000000",
         authorizers: ["authorizer_key_hash_1", "authorizer_key_hash_2"],
       },
     });
@@ -53,6 +60,10 @@ contract_slug: marketplace
 build:
   target: validators/marketplace.ak
   kind: validator
+  parameters:
+    marketplace_address: addr_test1foo
+    authorizers:
+      - authorizer_key_hash_1
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
@@ -78,6 +89,10 @@ contract_slug: marketplace
 build:
   target: validators/marketplace.ak
   kind: validator
+  parameters:
+    marketplace_address: addr_test1foo
+    authorizers:
+      - authorizer_key_hash_1
 subhandle_strategy:
   namespace: handlecontracts
   format: contract_slug_ordinal
@@ -87,5 +102,67 @@ settings:
         "missing settings values"
       )
     ).toThrow("missing settings values.settings must include object field `values`");
+  });
+
+  test("rejects missing build parameters required for hash derivation", () => {
+    // Feature: desired-state YAML must carry the complete marketplace contract parameters needed to rebuild the validator hash.
+    // Failure mode: workflow drift checks would have settings data but still be unable to derive the expected live script hash.
+    expect(() =>
+      parseDesiredDeploymentState(
+        `
+schema_version: 1
+network: preview
+contract_slug: marketplace
+build:
+  target: validators/marketplace.ak
+  kind: validator
+subhandle_strategy:
+  namespace: handlecontracts
+  format: contract_slug_ordinal
+settings:
+  type: marketplace_settings
+  values:
+    marketplace_address: addr_test1foo
+    authorizers:
+      - authorizer_key_hash_1
+        `,
+        "missing build parameters"
+      )
+    ).toThrow(
+      "missing build parameters.build must include object field `parameters`"
+    );
+  });
+
+  test("rejects mismatched build parameters and settings values", () => {
+    // Feature: desired-state build inputs and desired settings must describe the same marketplace deployment state.
+    // Failure mode: tx planning could derive one script hash while drift comparisons expect a different datum payload.
+    expect(() =>
+      parseDesiredDeploymentState(
+        `
+schema_version: 1
+network: preview
+contract_slug: marketplace
+build:
+  target: validators/marketplace.ak
+  kind: validator
+  parameters:
+    marketplace_address: addr_test1build
+    authorizers:
+      - authorizer_key_hash_1
+subhandle_strategy:
+  namespace: handlecontracts
+  format: contract_slug_ordinal
+settings:
+  type: marketplace_settings
+  values:
+    marketplace_address: addr_test1settings
+    authorizers:
+      - authorizer_key_hash_1
+        `,
+        "mismatched values"
+      )
+    ).toThrow(
+      "mismatched values build.parameters must match settings.values for marketplace deployments"
+    );
   });
 });

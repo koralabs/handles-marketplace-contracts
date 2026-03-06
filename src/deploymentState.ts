@@ -5,6 +5,10 @@ import YAML from "yaml";
 type DeploymentNetwork = "preview" | "preprod" | "mainnet";
 type BuildKind = "validator" | "minting_policy";
 type SubhandleFormat = "contract_slug_ordinal";
+type MarketplaceBuildParameters = {
+  marketplaceAddress: string;
+  authorizers: string[];
+};
 
 type DesiredDeploymentState = {
   schemaVersion: 1;
@@ -13,6 +17,7 @@ type DesiredDeploymentState = {
   build: {
     target: string;
     kind: BuildKind;
+    parameters: MarketplaceBuildParameters;
   };
   subhandleStrategy: {
     namespace: string;
@@ -20,7 +25,7 @@ type DesiredDeploymentState = {
   };
   settings: {
     type: string;
-    values: Record<string, unknown>;
+    values: MarketplaceBuildParameters;
   };
 };
 
@@ -92,6 +97,10 @@ const parseDesiredDeploymentState = (
   if (!ALLOWED_BUILD_KINDS.has(buildKind)) {
     throw new Error(`${sourceLabel}.build kind must be validator or minting_policy`);
   }
+  const buildParameters = parseMarketplaceBuildParameters(
+    requireObject(build, "parameters", `${sourceLabel}.build`),
+    `${sourceLabel}.build.parameters`
+  );
 
   const subhandleStrategy = requireObject(value, "subhandle_strategy", sourceLabel);
   const namespace = requireString(
@@ -112,7 +121,19 @@ const parseDesiredDeploymentState = (
 
   const settings = requireObject(value, "settings", sourceLabel);
   const settingsType = requireString(settings, "type", `${sourceLabel}.settings`);
-  const settingsValues = requireObject(settings, "values", `${sourceLabel}.settings`);
+  const settingsValues = parseMarketplaceBuildParameters(
+    requireObject(settings, "values", `${sourceLabel}.settings`),
+    `${sourceLabel}.settings.values`
+  );
+  if (
+    buildParameters.marketplaceAddress !== settingsValues.marketplaceAddress ||
+    JSON.stringify(buildParameters.authorizers) !==
+      JSON.stringify(settingsValues.authorizers)
+  ) {
+    throw new Error(
+      `${sourceLabel} build.parameters must match settings.values for marketplace deployments`
+    );
+  }
 
   return {
     schemaVersion: 1,
@@ -121,6 +142,7 @@ const parseDesiredDeploymentState = (
     build: {
       target: buildTarget,
       kind: buildKind,
+      parameters: buildParameters,
     },
     subhandleStrategy: {
       namespace,
@@ -169,10 +191,39 @@ const requireNumber = (
   return resolved;
 };
 
+const parseMarketplaceBuildParameters = (
+  value: Record<string, unknown>,
+  sourceLabel: string
+): MarketplaceBuildParameters => ({
+  marketplaceAddress: requireString(value, "marketplace_address", sourceLabel),
+  authorizers: requireStringArray(value, "authorizers", sourceLabel),
+});
+
+const requireStringArray = (
+  value: Record<string, unknown>,
+  key: string,
+  sourceLabel: string
+): string[] => {
+  const resolved = value[key];
+  if (!Array.isArray(resolved) || resolved.length === 0) {
+    throw new Error(`${sourceLabel} must include non-empty string array field \`${key}\``);
+  }
+
+  const normalized = resolved.map((item) => {
+    if (typeof item !== "string" || item.trim() === "") {
+      throw new Error(`${sourceLabel} must include non-empty string array field \`${key}\``);
+    }
+    return item.trim();
+  });
+
+  return normalized;
+};
+
 export type {
   BuildKind,
   DeploymentNetwork,
   DesiredDeploymentState,
+  MarketplaceBuildParameters,
   SubhandleFormat,
 };
 export { loadDesiredDeploymentState, parseDesiredDeploymentState };
