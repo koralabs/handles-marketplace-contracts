@@ -1,0 +1,15 @@
+schema_version: 1
+network: preview
+contract_slug: marketplace
+build:
+  target: validators/marketplace.ak
+  kind: validator
+subhandle_strategy:
+  namespace: handlecontracts
+  format: contract_slug_ordinal
+settings:
+  type: marketplace_settings
+  values:
+    authorizers:
+      - authorizer_key_hash_1
+      - authorizer_key_hash_2
