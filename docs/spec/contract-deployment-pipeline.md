@@ -5,6 +5,11 @@ This repo owns the desired on-chain deployment state for marketplace contracts a
 
 The repo should define what ought to be live on `preview`, `preprod`, and `mainnet`. It should not be treated as the storage location for volatile live references such as current settings UTxO refs.
 
+Canonical slug naming for this repo follows the shared rule in `kora-bot/docs/spec/contract-deployment-pipeline.md`:
+- `<app><[ord|mnt|ref|roy]><[mpt]>`
+- `contract_slug`, `script_type`, and `deployment_handle_slug` must match
+- `old_script_type` is legacy migration-only
+
 ## State Model
 - Desired state lives in committed YAML files in this repo.
 - Observed live state is read from chain UTxOs and deployed script hashes.
@@ -21,11 +26,14 @@ deploy/<network>/<contract_slug>.yaml
 Each file should contain stable desired state only:
 
 ```yaml
-schema_version: 1
+schema_version: 2
 network: preview
-contract_slug: marketplace
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1...
@@ -34,6 +42,11 @@ build:
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts:
+    - <current_handle>
+ignored_settings: []
 settings:
   type: marketplace_settings
   values:
@@ -46,11 +59,15 @@ Required stable fields:
 - `schema_version`
 - `network`
 - `contract_slug`
+- `deployment_handle_slug`
 - `build.target`
 - `build.kind`
 - `build.parameters`
 - `subhandle_strategy.namespace`
 - `subhandle_strategy.format`
+- `assigned_handles.settings`
+- `assigned_handles.scripts`
+- `ignored_settings`
 - `settings.type`
 - `settings.values`
 
@@ -59,6 +76,9 @@ For marketplace deployments, the desired YAML must carry the full validator para
 - `build.parameters.authorizers`
 
 Those same stable values should also appear in `settings.values` because they are part of the repo-owned desired on-chain marketplace settings datum.
+
+`deployment_handle_slug` must be 10 characters or fewer and must not contain separators such as `-` or `_`.
+`assigned_handles.scripts` must record the currently assigned live marketplace handle for that network.
 
 Observed-only fields that must not be committed into desired-state YAML:
 - `current_script_hash`
@@ -94,8 +114,8 @@ The deployment workflow for this repo should emit:
 - optional observed-state snapshot artifacts for debugging and audit
 
 For the first supported marketplace flow:
-- push and pull request runs should always emit `deployment-plan.json`, `summary.json`, and `summary.md`
-- manual dispatch may also emit `tx-01.cbor` when signer-side wallet inputs are supplied to the workflow
+- push and pull request runs should emit `deployment-plan.json`, `summary.json`, and `summary.md` for every committed `deploy/<network>/marketplace.yaml`
+- manual dispatch may target one desired-state YAML via `desired_path` and may also emit `tx-01.cbor` when signer-side wallet inputs are supplied to the workflow
 - artifact metadata should explicitly state whether the CBOR file was generated on that run
 
 The canonical observed-state artifact should be JSON and should include:
@@ -105,10 +125,10 @@ The canonical observed-state artifact should be JSON and should include:
   "schema_version": 1,
   "repo": "handles-marketplace-contracts",
   "network": "preview",
-  "contract_slug": "marketplace",
+  "contract_slug": "mkpl",
   "current_script_hash": "<hash>",
   "current_settings_utxo_ref": "<tx>#<ix>",
-  "current_subhandle": "marketplace1@handlecontract",
+  "current_subhandle": "mkpl1@handlecontract",
   "settings": {
     "type": "marketplace_settings",
     "values": {}

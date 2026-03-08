@@ -39,15 +39,17 @@ const buildExpectedMarketplaceScriptHash = (
 
 const fetchLiveMarketplaceDeploymentState = async ({
   network,
+  scriptType,
   userAgent,
   fetchFn = fetch,
 }: {
   network: string;
+  scriptType: string;
   userAgent: string;
   fetchFn?: FetchLike;
 }): Promise<LiveMarketplaceDeploymentState> => {
   const response = await fetchFn(
-    `${handlesApiBaseUrlForNetwork(network)}/scripts?latest=true&type=marketplace_contract`,
+    `${handlesApiBaseUrlForNetwork(network)}/scripts?latest=true&type=${encodeURIComponent(scriptType)}`,
     {
       headers: {
         "User-Agent": userAgent,
@@ -55,14 +57,14 @@ const fetchLiveMarketplaceDeploymentState = async ({
     }
   );
   if (!response.ok) {
-    throw new Error(`failed to load live marketplace script: HTTP ${response.status}`);
+    throw new Error(`failed to load live ${scriptType} script: HTTP ${response.status}`);
   }
   const payload = (await response.json()) as Record<string, unknown>;
   const currentScriptHash = String(
     payload.validatorHash ?? payload.scriptHash ?? ""
   ).trim();
   if (!currentScriptHash) {
-    throw new Error("live marketplace script response missing validatorHash/scriptHash");
+    throw new Error(`live ${scriptType} script response missing validatorHash/scriptHash`);
   }
   const currentSubhandle = String(payload.handle ?? "").trim() || null;
   return {
@@ -71,37 +73,75 @@ const fetchLiveMarketplaceDeploymentState = async ({
   };
 };
 
+const parseHandleOrdinal = ({
+  candidate,
+  deploymentHandleSlug,
+  namespace,
+}: {
+  candidate: string;
+  deploymentHandleSlug: string;
+  namespace: string;
+}): number | null => {
+  const prefix = `${deploymentHandleSlug}`;
+  const suffix = `@${namespace}`;
+  if (!candidate.startsWith(prefix) || !candidate.endsWith(suffix)) {
+    return null;
+  }
+  const ordinalText = candidate.slice(prefix.length, candidate.length - suffix.length);
+  if (!/^[0-9]+$/.test(ordinalText)) {
+    return null;
+  }
+  return Number.parseInt(ordinalText, 10);
+};
+
 const discoverNextContractSubhandle = async ({
   network,
-  contractSlug,
+  deploymentHandleSlug,
   namespace,
+  currentSubhandle,
   userAgent,
   fetchFn = fetch,
 }: {
   network: string;
-  contractSlug: string;
+  deploymentHandleSlug: string;
   namespace: string;
+  currentSubhandle?: string | null;
   userAgent: string;
   fetchFn?: FetchLike;
 }): Promise<string> => {
   const baseUrl = handlesApiBaseUrlForNetwork(network);
+  const existingOrdinals: number[] = [];
   for (let ordinal = 1; ordinal < 10_000; ordinal += 1) {
-    const candidate = `${contractSlug}${ordinal}@${namespace}`;
+    const candidate = `${deploymentHandleSlug}${ordinal}@${namespace}`;
     const response = await fetchFn(`${baseUrl}/handles/${candidate}`, {
       headers: {
         "User-Agent": userAgent,
       },
     });
     if (response.status === 404) {
-      return candidate;
+      const currentOrdinal =
+        currentSubhandle == null
+          ? 0
+          : parseHandleOrdinal({
+              candidate: currentSubhandle,
+              deploymentHandleSlug,
+              namespace,
+            }) ?? 0;
+      const existingReplacement = existingOrdinals.find(
+        (existingOrdinal) => existingOrdinal > currentOrdinal
+      );
+      return existingReplacement != null
+        ? `${deploymentHandleSlug}${existingReplacement}@${namespace}`
+        : candidate;
     }
     if (!response.ok) {
       throw new Error(
         `failed to probe SubHandle ${candidate}: HTTP ${response.status}`
       );
     }
+    existingOrdinals.push(ordinal);
   }
-  throw new Error(`no available SubHandle found for ${contractSlug}@${namespace}`);
+  throw new Error(`no available SubHandle found for ${deploymentHandleSlug}@${namespace}`);
 };
 
 const buildMarketplaceDeploymentPlan = ({
@@ -133,6 +173,8 @@ const buildMarketplaceDeploymentPlan = ({
           current_script_hash: live.currentScriptHash,
           expected_script_hash: expectedScriptHash,
           planned_subhandle: plannedSubhandle,
+          assigned_handles: desired.assignedHandles,
+          ignored_settings: desired.ignoredSettings,
           desired_settings: desired.settings,
         },
         Object.keys({
@@ -141,6 +183,8 @@ const buildMarketplaceDeploymentPlan = ({
           current_script_hash: "",
           expected_script_hash: "",
           planned_subhandle: "",
+          assigned_handles: "",
+          ignored_settings: "",
           desired_settings: "",
         }).sort()
       )
@@ -152,9 +196,14 @@ const buildMarketplaceDeploymentPlan = ({
     contract_slug: desired.contractSlug,
     expected_script_hash: expectedScriptHash,
     expected_subhandle: plannedSubhandle,
+    assigned_handles: {
+      settings: desired.assignedHandles.settings,
+      scripts: [plannedSubhandle],
+    },
     settings: {
       type: desired.settings.type,
       values: desired.settings.values,
+      ignored_paths: desired.ignoredSettings,
     },
   };
   const transactionOrder = driftType === "no_change" ? [] : ["tx-01.cbor"];
@@ -174,6 +223,7 @@ const buildMarketplaceDeploymentPlan = ({
           type: desired.settings.type,
           diff_rows: [],
           desired_values: desired.settings.values,
+          ignored_paths: desired.ignoredSettings,
         },
         subhandle: {
           action: driftType === "no_change" ? "reuse" : "allocate",

@@ -10,7 +10,7 @@
 - CLI entrypoint:
   - `CLI/entrypoint.ts` with command modules in `CLI/commands/*`.
 - Validator source:
-  - `validators/marketplace.ak` (Aiken).
+  - `validators/mkpl.ak` (Aiken).
 
 ### Core Build Modules
 - `src/list.ts`

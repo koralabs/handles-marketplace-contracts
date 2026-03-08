@@ -18,43 +18,15 @@ on:
 
 jobs:
   deployment-plan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      DESIRED_PATH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.desired_path || 'deploy/preview/marketplace.yaml' }}
-      CHANGE_ADDRESS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.change_address || '' }}
-      CBOR_UTXOS_JSON: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.cbor_utxos_json || '' }}
-      KORA_USER_AGENT: ${{ vars.KORA_USER_AGENT }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.18
-          check-latest: true
-
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate deployment artifacts
-        run: |
-          set -eu
-          mkdir -p artifacts/preview
-          args=(--desired "$DESIRED_PATH" --artifacts-dir artifacts/preview)
-          if [ -n "$CHANGE_ADDRESS" ] || [ -n "$CBOR_UTXOS_JSON" ]; then
-            args+=(--change-address "$CHANGE_ADDRESS" --cbor-utxos-json "$CBOR_UTXOS_JSON")
-          fi
-          pnpm exec tsx scripts/generateDeploymentPlan.ts "${args[@]}"
-
-      - name: Upload deployment plan artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-plan-${{ github.run_id }}
-          path: artifacts/preview
-          if-no-files-found: error
-          retention-days: 7
+    uses: koralabs/adahandle-deployments/.github/workflows/contract-deployment-plan.yml@master
+    secrets: inherit
+    with:
+      desired_path: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.desired_path || '' }}
+      change_address: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.change_address || '' }}
+      cbor_utxos_json: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.cbor_utxos_json || '' }}
+      node_version: "20.18"
+      timeout_minutes: 10
+      kora_user_agent: ${{ vars.KORA_USER_AGENT }}
+      setup_command: npm install -g pnpm
+      install_command: pnpm install --frozen-lockfile
+      planner_command: pnpm exec tsx scripts/generateDeploymentPlan.ts

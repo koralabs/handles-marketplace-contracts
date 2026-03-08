@@ -9,34 +9,36 @@ import {
 import type { DesiredDeploymentState } from "../src/deploymentState.js";
 
 const desiredState: DesiredDeploymentState = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   network: "preview",
-  contractSlug: "marketplace",
+  contractSlug: "mkpl",
+  scriptType: "mkpl",
+  oldScriptType: "marketplace_contract",
+  deploymentHandleSlug: "mkpl",
   build: {
-    target: "validators/marketplace.ak",
+    target: "validators/mkpl.ak",
     kind: "validator",
     parameters: {
       marketplaceAddress:
-        "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-      authorizers: [
-        "11111111111111111111111111111111111111111111111111111111",
-        "22222222222222222222222222222222222222222222222222222222",
-      ],
+        "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
     },
   },
   subhandleStrategy: {
     namespace: "handlecontract",
     format: "contract_slug_ordinal",
   },
+  assignedHandles: {
+    settings: [],
+    scripts: ["dev@golddy"],
+  },
+  ignoredSettings: [],
   settings: {
     type: "marketplace_settings",
     values: {
       marketplaceAddress:
-        "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-      authorizers: [
-        "11111111111111111111111111111111111111111111111111111111",
-        "22222222222222222222222222222222222222222222222222222222",
-      ],
+        "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
     },
   },
 };
@@ -69,7 +71,7 @@ describe("deployment plan helpers", () => {
       expectedScriptHash,
       live: {
         currentScriptHash: expectedScriptHash,
-        currentSubhandle: "marketplace3@handlecontract",
+        currentSubhandle: "mkpl3@handlecontract",
       },
       nextSubhandle: null,
     });
@@ -91,46 +93,75 @@ describe("deployment plan helpers", () => {
       expectedScriptHash,
       live: {
         currentScriptHash: "ab".repeat(28),
-        currentSubhandle: "marketplace3@handlecontract",
+        currentSubhandle: "mkpl3@handlecontract",
       },
-      nextSubhandle: "marketplace4@handlecontract",
+      nextSubhandle: "mkpl4@handlecontract",
     });
 
     expect(plan.driftType).toBe("script_hash_only");
     expect(plan.summaryJson.transaction_order).toEqual(["tx-01.cbor"]);
-    expect(plan.summaryMarkdown).toContain("`marketplace4@handlecontract`");
+    expect(plan.summaryMarkdown).toContain("`mkpl4@handlecontract`");
+    expect(plan.summaryJson.contracts[0].expected_post_deploy_state).toMatchObject({
+      assigned_handles: {
+        settings: [],
+        scripts: ["mkpl4@handlecontract"],
+      },
+      settings: {
+        ignored_paths: [],
+      },
+    });
   });
 
-  test("fetches live marketplace deployment state from the Handles API", async () => {
-    // Feature: the workflow planner reads the currently deployed marketplace script hash from the network-specific Handles API.
-    // Failure mode: workflow artifacts could diff against the wrong network or miss the current SubHandle binding.
-    const requests: Array<{ url: string; headers: HeadersInit | undefined }> = [];
-    const state = await fetchLiveMarketplaceDeploymentState({
+  test.each([
+    {
       network: "preview",
-      userAgent: "codex-test",
-      fetchFn: async (url, init) => {
-        requests.push({ url: String(url), headers: init?.headers });
-        return new Response(
-          JSON.stringify({
-            validatorHash: "cd".repeat(28),
-            handle: "marketplace9@handlecontract",
-          }),
-          { status: 200 }
-        );
-      },
-    });
+      expectedUrl:
+        "https://preview.api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+    {
+      network: "preprod",
+      expectedUrl:
+        "https://preprod.api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+    {
+      network: "mainnet",
+      expectedUrl:
+        "https://api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+  ])(
+    "fetches live marketplace deployment state from the $network Handles API",
+    async ({ network, expectedUrl }) => {
+      // Feature: the workflow planner reads the currently deployed marketplace script hash from the network-specific Handles API.
+      // Failure mode: workflow artifacts could diff against the wrong network or miss the current SubHandle binding.
+      const requests: Array<{ url: string; headers: HeadersInit | undefined }> = [];
+      const state = await fetchLiveMarketplaceDeploymentState({
+        network,
+        scriptType: desiredState.oldScriptType ?? desiredState.scriptType,
+        userAgent: "codex-test",
+        fetchFn: async (url, init) => {
+          requests.push({ url: String(url), headers: init?.headers });
+          return new Response(
+            JSON.stringify({
+              validatorHash: "cd".repeat(28),
+              handle: "mkpl9@handlecontract",
+            }),
+            { status: 200 }
+          );
+        },
+      });
 
-    expect(state).toEqual({
-      currentScriptHash: "cd".repeat(28),
-      currentSubhandle: "marketplace9@handlecontract",
-    });
-    expect(requests).toEqual([
-      {
-        url: "https://preview.api.handle.me/scripts?latest=true&type=marketplace_contract",
-        headers: { "User-Agent": "codex-test" },
-      },
-    ]);
-  });
+      expect(state).toEqual({
+        currentScriptHash: "cd".repeat(28),
+        currentSubhandle: "mkpl9@handlecontract",
+      });
+      expect(requests).toEqual([
+        {
+          url: expectedUrl,
+          headers: { "User-Agent": "codex-test" },
+        },
+      ]);
+    }
+  );
 
   test("discovers the next available contract SubHandle ordinal", async () => {
     // Feature: script-hash deployments must allocate the next free <contract_slug><ordinal>@handlecontract name.
@@ -138,24 +169,44 @@ describe("deployment plan helpers", () => {
     const requested: string[] = [];
     const subhandle = await discoverNextContractSubhandle({
       network: "preview",
-      contractSlug: "marketplace",
+      deploymentHandleSlug: "mkpl",
       namespace: "handlecontract",
+      currentSubhandle: "mkpl2@handlecontract",
       userAgent: "codex-test",
       fetchFn: async (url) => {
         requested.push(String(url));
         const urlText = String(url);
         return new Response(
           JSON.stringify({ ok: true }),
-          { status: urlText.endsWith("marketplace3@handlecontract") ? 404 : 200 }
+          { status: urlText.endsWith("mkpl4@handlecontract") ? 404 : 200 }
         );
       },
     });
 
-    expect(subhandle).toBe("marketplace3@handlecontract");
+    expect(subhandle).toBe("mkpl3@handlecontract");
     expect(requested).toEqual([
-      "https://preview.api.handle.me/handles/marketplace1@handlecontract",
-      "https://preview.api.handle.me/handles/marketplace2@handlecontract",
-      "https://preview.api.handle.me/handles/marketplace3@handlecontract",
+      "https://preview.api.handle.me/handles/mkpl1@handlecontract",
+      "https://preview.api.handle.me/handles/mkpl2@handlecontract",
+      "https://preview.api.handle.me/handles/mkpl3@handlecontract",
+      "https://preview.api.handle.me/handles/mkpl4@handlecontract",
     ]);
+  });
+
+  test("reuses the lowest minted replacement handle before allocating a new ordinal", async () => {
+    // Feature: rerunning the planner after minting a replacement handle should reuse that minted ordinal instead of skipping ahead.
+    // Failure mode: repeated workflow runs would burn new handle ordinals before any deployment tx is signed.
+    const subhandle = await discoverNextContractSubhandle({
+      network: "preview",
+      deploymentHandleSlug: "mkpl",
+      namespace: "handlecontract",
+      currentSubhandle: "legacy@golddy",
+      userAgent: "codex-test",
+      fetchFn: async (url) =>
+        new Response("{}", {
+          status: String(url).endsWith("mkpl2@handlecontract") ? 404 : 200,
+        }),
+    });
+
+    expect(subhandle).toBe("mkpl1@handlecontract");
   });
 });

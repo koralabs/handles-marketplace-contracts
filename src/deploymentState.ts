@@ -11,9 +11,12 @@ type MarketplaceBuildParameters = {
 };
 
 type DesiredDeploymentState = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   network: DeploymentNetwork;
   contractSlug: string;
+  scriptType: string;
+  oldScriptType: string | null;
+  deploymentHandleSlug: string;
   build: {
     target: string;
     kind: BuildKind;
@@ -21,8 +24,13 @@ type DesiredDeploymentState = {
   };
   subhandleStrategy: {
     namespace: string;
-    format: SubhandleFormat;
+      format: SubhandleFormat;
   };
+  assignedHandles: {
+    settings: string[];
+    scripts: string[];
+  };
+  ignoredSettings: string[];
   settings: {
     type: string;
     values: MarketplaceBuildParameters;
@@ -81,8 +89,8 @@ const parseDesiredDeploymentState = (
   }
 
   const schemaVersion = requireNumber(value, "schema_version", sourceLabel);
-  if (schemaVersion !== 1) {
-    throw new Error(`${sourceLabel} schema_version must equal 1`);
+  if (schemaVersion !== 2) {
+    throw new Error(`${sourceLabel} schema_version must equal 2`);
   }
 
   const network = requireString(value, "network", sourceLabel) as DeploymentNetwork;
@@ -90,7 +98,14 @@ const parseDesiredDeploymentState = (
     throw new Error(`${sourceLabel} network must be one of preview, preprod, mainnet`);
   }
 
-  const contractSlug = requireString(value, "contract_slug", sourceLabel);
+  const contractSlug = requireShortHandleSlug(value, "contract_slug", sourceLabel);
+  const scriptType = requireShortHandleSlug(value, "script_type", sourceLabel);
+  const deploymentHandleSlug = requireShortHandleSlug(value, "deployment_handle_slug", sourceLabel);
+  if (contractSlug !== scriptType || scriptType !== deploymentHandleSlug) {
+    throw new Error(
+      `${sourceLabel} contract_slug, script_type, and deployment_handle_slug must match`
+    );
+  }
   const build = requireObject(value, "build", sourceLabel);
   const buildTarget = requireString(build, "target", `${sourceLabel}.build`);
   const buildKind = requireString(build, "kind", `${sourceLabel}.build`) as BuildKind;
@@ -135,10 +150,16 @@ const parseDesiredDeploymentState = (
     );
   }
 
+  const assignedHandles = requireObject(value, "assigned_handles", sourceLabel);
+  const ignoredSettings = requireStringArrayAllowEmpty(value, "ignored_settings", sourceLabel);
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     network,
     contractSlug,
+    scriptType,
+    oldScriptType: requireOptionalShortHandleSlug(value, "old_script_type", sourceLabel),
+    deploymentHandleSlug,
     build: {
       target: buildTarget,
       kind: buildKind,
@@ -148,6 +169,11 @@ const parseDesiredDeploymentState = (
       namespace,
       format,
     },
+    assignedHandles: {
+      settings: requireStringArrayAllowEmpty(assignedHandles, "settings", `${sourceLabel}.assigned_handles`),
+      scripts: requireStringArrayAllowEmpty(assignedHandles, "scripts", `${sourceLabel}.assigned_handles`),
+    },
+    ignoredSettings,
     settings: {
       type: settingsType,
       values: settingsValues,
@@ -216,6 +242,57 @@ const requireStringArray = (
     return item.trim();
   });
 
+  return normalized;
+};
+
+const requireStringArrayAllowEmpty = (
+  value: Record<string, unknown>,
+  key: string,
+  sourceLabel: string
+): string[] => {
+  const resolved = value[key];
+  if (!Array.isArray(resolved)) {
+    throw new Error(`${sourceLabel} must include array field \`${key}\``);
+  }
+  return resolved.map((item) => {
+    if (typeof item !== "string" || item.trim() === "") {
+      throw new Error(`${sourceLabel} must include string array field \`${key}\``);
+    }
+    return item.trim();
+  });
+};
+
+const requireShortHandleSlug = (
+  value: Record<string, unknown>,
+  key: string,
+  sourceLabel: string
+): string => {
+  const resolved = requireString(value, key, sourceLabel);
+  if (resolved.length > 10) {
+    throw new Error(`${sourceLabel}.${key} must be 10 characters or fewer`);
+  }
+  if (resolved.includes("-") || resolved.includes("_")) {
+    throw new Error(`${sourceLabel}.${key} must not contain '-' or '_'`);
+  }
+  return resolved;
+};
+
+const requireOptionalShortHandleSlug = (
+  value: Record<string, unknown>,
+  key: string,
+  sourceLabel: string
+): string | null => {
+  const resolved = value[key];
+  if (resolved === undefined || resolved === null) {
+    return null;
+  }
+  if (typeof resolved !== "string" || resolved.trim() === "") {
+    throw new Error(`${sourceLabel} must include string field \`${key}\``);
+  }
+  const normalized = resolved.trim();
+  if (normalized.length > 64) {
+    throw new Error(`${sourceLabel}.${key} must be 64 characters or fewer`);
+  }
   return normalized;
 };
 
