@@ -12,47 +12,61 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 describe("deployment state loader", () => {
-  test("loads a desired deployment YAML fixture into the normalized shape", async () => {
-    // Feature: desired contract deployment state is loaded from repo YAML without live-only fields.
-    // Failure mode: drift/planning code would consume malformed or incomplete desired-state config.
-    const fixturePath = path.resolve(
-      __dirname,
-      "../deploy/preview/marketplace.yaml"
-    );
+  test.each([
+    {
+      network: "preview",
+      relativePath: "../deploy/preview/marketplace.yaml",
+      marketplaceAddress:
+        "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
+    },
+    {
+      network: "preprod",
+      relativePath: "../deploy/preprod/marketplace.yaml",
+      marketplaceAddress:
+        "addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf",
+      authorizers: ["c4c2d1d080900cb6d25d87b774954410d01fd3e6bb21e25d09130fa5"],
+    },
+    {
+      network: "mainnet",
+      relativePath: "../deploy/mainnet/marketplace.yaml",
+      marketplaceAddress:
+        "addr1xysgj7dndz9ql57jsh5y0ss258d0yl8wqfj4hy00ulyw6ueq39umx6y2plfa9p0gglpq4gw67f7wuqn9twg7le7ga4es4uake8",
+      authorizers: ["4da965a049dfd15ed1ee19fba6e2974a0b79fc416dd1796a1f97f5e1"],
+    },
+  ])(
+    "loads the $network desired deployment YAML fixture into the normalized shape",
+    async ({ relativePath, network, marketplaceAddress, authorizers }) => {
+      // Feature: desired contract deployment state is loaded from repo YAML without live-only fields.
+      // Failure mode: drift/planning code would consume malformed or incomplete desired-state config.
+      const fixturePath = path.resolve(__dirname, relativePath);
 
-    const state = await loadDesiredDeploymentState(fixturePath);
+      const state = await loadDesiredDeploymentState(fixturePath);
 
-    expect(state.schemaVersion).toBe(1);
-    expect(state.network).toBe("preview");
-    expect(state.contractSlug).toBe("marketplace");
-    expect(state.build).toEqual({
-      target: "validators/marketplace.ak",
-      kind: "validator",
-      parameters: {
-        marketplaceAddress:
-          "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-        authorizers: [
-          "11111111111111111111111111111111111111111111111111111111",
-          "22222222222222222222222222222222222222222222222222222222",
-        ],
-      },
-    });
-    expect(state.subhandleStrategy).toEqual({
-      namespace: "handlecontract",
-      format: "contract_slug_ordinal",
-    });
-    expect(state.settings).toEqual({
-      type: "marketplace_settings",
-      values: {
-        marketplaceAddress:
-          "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-        authorizers: [
-          "11111111111111111111111111111111111111111111111111111111",
-          "22222222222222222222222222222222222222222222222222222222",
-        ],
-      },
-    });
-  });
+      expect(state.schemaVersion).toBe(1);
+      expect(state.network).toBe(network);
+      expect(state.contractSlug).toBe("marketplace");
+      expect(state.build).toEqual({
+        target: "validators/marketplace.ak",
+        kind: "validator",
+        parameters: {
+          marketplaceAddress,
+          authorizers,
+        },
+      });
+      expect(state.subhandleStrategy).toEqual({
+        namespace: "handlecontract",
+        format: "contract_slug_ordinal",
+      });
+      expect(state.settings).toEqual({
+        type: "marketplace_settings",
+        values: {
+          marketplaceAddress,
+          authorizers,
+        },
+      });
+    }
+  );
 
   test("rejects observed-only live fields inside desired deployment YAML", () => {
     // Feature: desired-state YAML excludes volatile live chain fields so repo drift stays stable.

@@ -94,8 +94,8 @@ The deployment workflow for this repo should emit:
 - optional observed-state snapshot artifacts for debugging and audit
 
 For the first supported marketplace flow:
-- push and pull request runs should always emit `deployment-plan.json`, `summary.json`, and `summary.md`
-- manual dispatch may also emit `tx-01.cbor` when signer-side wallet inputs are supplied to the workflow
+- push and pull request runs should emit `deployment-plan.json`, `summary.json`, and `summary.md` for every committed `deploy/<network>/marketplace.yaml`
+- manual dispatch may target one desired-state YAML via `desired_path` and may also emit `tx-01.cbor` when signer-side wallet inputs are supplied to the workflow
 - artifact metadata should explicitly state whether the CBOR file was generated on that run
 
 The canonical observed-state artifact should be JSON and should include:

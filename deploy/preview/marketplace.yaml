@@ -5,17 +5,15 @@ build:
   target: validators/marketplace.ak
   kind: validator
   parameters:
-    marketplace_address: addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9
+    marketplace_address: addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej
     authorizers:
-      - "11111111111111111111111111111111111111111111111111111111"
-      - "22222222222222222222222222222222222222222222222222222222"
+      - "0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
 settings:
   type: marketplace_settings
   values:
-    marketplace_address: addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9
+    marketplace_address: addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej
     authorizers:
-      - "11111111111111111111111111111111111111111111111111111111"
-      - "22222222222222222222222222222222222222222222222222222222"
+      - "0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"

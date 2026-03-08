@@ -17,11 +17,8 @@ const desiredState: DesiredDeploymentState = {
     kind: "validator",
     parameters: {
       marketplaceAddress:
-        "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-      authorizers: [
-        "11111111111111111111111111111111111111111111111111111111",
-        "22222222222222222222222222222222222222222222222222222222",
-      ],
+        "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
     },
   },
   subhandleStrategy: {
@@ -32,11 +29,8 @@ const desiredState: DesiredDeploymentState = {
     type: "marketplace_settings",
     values: {
       marketplaceAddress:
-        "addr_test1wzwd9vt3suazurpnl9dugs2de9y4ly6r6nqnpvsswhmnf6q9qlcy9",
-      authorizers: [
-        "11111111111111111111111111111111111111111111111111111111",
-        "22222222222222222222222222222222222222222222222222222222",
-      ],
+        "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
     },
   },
 };
@@ -101,36 +95,55 @@ describe("deployment plan helpers", () => {
     expect(plan.summaryMarkdown).toContain("`marketplace4@handlecontract`");
   });
 
-  test("fetches live marketplace deployment state from the Handles API", async () => {
-    // Feature: the workflow planner reads the currently deployed marketplace script hash from the network-specific Handles API.
-    // Failure mode: workflow artifacts could diff against the wrong network or miss the current SubHandle binding.
-    const requests: Array<{ url: string; headers: HeadersInit | undefined }> = [];
-    const state = await fetchLiveMarketplaceDeploymentState({
+  test.each([
+    {
       network: "preview",
-      userAgent: "codex-test",
-      fetchFn: async (url, init) => {
-        requests.push({ url: String(url), headers: init?.headers });
-        return new Response(
-          JSON.stringify({
-            validatorHash: "cd".repeat(28),
-            handle: "marketplace9@handlecontract",
-          }),
-          { status: 200 }
-        );
-      },
-    });
+      expectedUrl:
+        "https://preview.api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+    {
+      network: "preprod",
+      expectedUrl:
+        "https://preprod.api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+    {
+      network: "mainnet",
+      expectedUrl:
+        "https://api.handle.me/scripts?latest=true&type=marketplace_contract",
+    },
+  ])(
+    "fetches live marketplace deployment state from the $network Handles API",
+    async ({ network, expectedUrl }) => {
+      // Feature: the workflow planner reads the currently deployed marketplace script hash from the network-specific Handles API.
+      // Failure mode: workflow artifacts could diff against the wrong network or miss the current SubHandle binding.
+      const requests: Array<{ url: string; headers: HeadersInit | undefined }> = [];
+      const state = await fetchLiveMarketplaceDeploymentState({
+        network,
+        userAgent: "codex-test",
+        fetchFn: async (url, init) => {
+          requests.push({ url: String(url), headers: init?.headers });
+          return new Response(
+            JSON.stringify({
+              validatorHash: "cd".repeat(28),
+              handle: "marketplace9@handlecontract",
+            }),
+            { status: 200 }
+          );
+        },
+      });
 
-    expect(state).toEqual({
-      currentScriptHash: "cd".repeat(28),
-      currentSubhandle: "marketplace9@handlecontract",
-    });
-    expect(requests).toEqual([
-      {
-        url: "https://preview.api.handle.me/scripts?latest=true&type=marketplace_contract",
-        headers: { "User-Agent": "codex-test" },
-      },
-    ]);
-  });
+      expect(state).toEqual({
+        currentScriptHash: "cd".repeat(28),
+        currentSubhandle: "marketplace9@handlecontract",
+      });
+      expect(requests).toEqual([
+        {
+          url: expectedUrl,
+          headers: { "User-Agent": "codex-test" },
+        },
+      ]);
+    }
+  );
 
   test("discovers the next available contract SubHandle ordinal", async () => {
     // Feature: script-hash deployments must allocate the next free <contract_slug><ordinal>@handlecontract name.
