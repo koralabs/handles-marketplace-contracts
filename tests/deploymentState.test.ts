@@ -19,6 +19,7 @@ describe("deployment state loader", () => {
       marketplaceAddress:
         "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
       authorizers: ["0c0647ff15d2df88897eb2471d9aba909cdcc842ad7c387ec0712725"],
+      assignedScriptHandles: ["dev@golddy"],
     },
     {
       network: "preprod",
@@ -26,6 +27,7 @@ describe("deployment state loader", () => {
       marketplaceAddress:
         "addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf",
       authorizers: ["c4c2d1d080900cb6d25d87b774954410d01fd3e6bb21e25d09130fa5"],
+      assignedScriptHandles: ["test_market_5"],
     },
     {
       network: "mainnet",
@@ -33,19 +35,21 @@ describe("deployment state loader", () => {
       marketplaceAddress:
         "addr1xysgj7dndz9ql57jsh5y0ss258d0yl8wqfj4hy00ulyw6ueq39umx6y2plfa9p0gglpq4gw67f7wuqn9twg7le7ga4es4uake8",
       authorizers: ["4da965a049dfd15ed1ee19fba6e2974a0b79fc416dd1796a1f97f5e1"],
+      assignedScriptHandles: ["marketplace@handle_scripts"],
     },
   ])(
     "loads the $network desired deployment YAML fixture into the normalized shape",
-    async ({ relativePath, network, marketplaceAddress, authorizers }) => {
+    async ({ relativePath, network, marketplaceAddress, authorizers, assignedScriptHandles }) => {
       // Feature: desired contract deployment state is loaded from repo YAML without live-only fields.
       // Failure mode: drift/planning code would consume malformed or incomplete desired-state config.
       const fixturePath = path.resolve(__dirname, relativePath);
 
       const state = await loadDesiredDeploymentState(fixturePath);
 
-      expect(state.schemaVersion).toBe(1);
+      expect(state.schemaVersion).toBe(2);
       expect(state.network).toBe(network);
       expect(state.contractSlug).toBe("marketplace");
+      expect(state.deploymentHandleSlug).toBe("marketplc");
       expect(state.build).toEqual({
         target: "validators/marketplace.ak",
         kind: "validator",
@@ -58,6 +62,11 @@ describe("deployment state loader", () => {
         namespace: "handlecontract",
         format: "contract_slug_ordinal",
       });
+      expect(state.assignedHandles).toEqual({
+        settings: [],
+        scripts: assignedScriptHandles,
+      });
+      expect(state.ignoredSettings).toEqual([]);
       expect(state.settings).toEqual({
         type: "marketplace_settings",
         values: {
@@ -74,9 +83,10 @@ describe("deployment state loader", () => {
     expect(() =>
       parseDesiredDeploymentState(
         `
-schema_version: 1
+schema_version: 2
 network: preview
 contract_slug: marketplace
+deployment_handle_slug: marketplc
 build:
   target: validators/marketplace.ak
   kind: validator
@@ -87,6 +97,10 @@ build:
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts: []
+ignored_settings: []
 current_script_hash: deadbeef
 settings:
   type: marketplace_settings
@@ -103,9 +117,10 @@ settings:
     expect(() =>
       parseDesiredDeploymentState(
         `
-schema_version: 1
+schema_version: 2
 network: preview
 contract_slug: marketplace
+deployment_handle_slug: marketplc
 build:
   target: validators/marketplace.ak
   kind: validator
@@ -116,6 +131,10 @@ build:
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts: []
+ignored_settings: []
 settings:
   type: marketplace_settings
         `,
@@ -130,15 +149,20 @@ settings:
     expect(() =>
       parseDesiredDeploymentState(
         `
-schema_version: 1
+schema_version: 2
 network: preview
 contract_slug: marketplace
+deployment_handle_slug: marketplc
 build:
   target: validators/marketplace.ak
   kind: validator
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts: []
+ignored_settings: []
 settings:
   type: marketplace_settings
   values:
@@ -159,9 +183,10 @@ settings:
     expect(() =>
       parseDesiredDeploymentState(
         `
-schema_version: 1
+schema_version: 2
 network: preview
 contract_slug: marketplace
+deployment_handle_slug: marketplc
 build:
   target: validators/marketplace.ak
   kind: validator
@@ -172,6 +197,10 @@ build:
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts: []
+ignored_settings: []
 settings:
   type: marketplace_settings
   values:
@@ -184,5 +213,39 @@ settings:
     ).toThrow(
       "mismatched values build.parameters must match settings.values for marketplace deployments"
     );
+  });
+
+  test("rejects long deployment handle slugs", () => {
+    expect(() =>
+      parseDesiredDeploymentState(
+        `
+schema_version: 2
+network: preview
+contract_slug: marketplace
+deployment_handle_slug: marketplace
+build:
+  target: validators/marketplace.ak
+  kind: validator
+  parameters:
+    marketplace_address: addr_test1build
+    authorizers:
+      - "11111111111111111111111111111111111111111111111111111111"
+subhandle_strategy:
+  namespace: handlecontract
+  format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts: []
+ignored_settings: []
+settings:
+  type: marketplace_settings
+  values:
+    marketplace_address: addr_test1build
+    authorizers:
+      - "11111111111111111111111111111111111111111111111111111111"
+        `,
+        "invalid slug"
+      )
+    ).toThrow("invalid slug.deployment_handle_slug must be 10 characters or fewer");
   });
 });

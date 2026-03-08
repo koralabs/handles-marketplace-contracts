@@ -9,9 +9,10 @@ import {
 import type { DesiredDeploymentState } from "../src/deploymentState.js";
 
 const desiredState: DesiredDeploymentState = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   network: "preview",
   contractSlug: "marketplace",
+  deploymentHandleSlug: "marketplc",
   build: {
     target: "validators/marketplace.ak",
     kind: "validator",
@@ -25,6 +26,11 @@ const desiredState: DesiredDeploymentState = {
     namespace: "handlecontract",
     format: "contract_slug_ordinal",
   },
+  assignedHandles: {
+    settings: [],
+    scripts: ["dev@golddy"],
+  },
+  ignoredSettings: [],
   settings: {
     type: "marketplace_settings",
     values: {
@@ -93,6 +99,15 @@ describe("deployment plan helpers", () => {
     expect(plan.driftType).toBe("script_hash_only");
     expect(plan.summaryJson.transaction_order).toEqual(["tx-01.cbor"]);
     expect(plan.summaryMarkdown).toContain("`marketplace4@handlecontract`");
+    expect(plan.summaryJson.contracts[0].expected_post_deploy_state).toMatchObject({
+      assigned_handles: {
+        settings: [],
+        scripts: ["marketplace4@handlecontract"],
+      },
+      settings: {
+        ignored_paths: [],
+      },
+    });
   });
 
   test.each([
@@ -151,7 +166,7 @@ describe("deployment plan helpers", () => {
     const requested: string[] = [];
     const subhandle = await discoverNextContractSubhandle({
       network: "preview",
-      contractSlug: "marketplace",
+      deploymentHandleSlug: "marketplc",
       namespace: "handlecontract",
       userAgent: "codex-test",
       fetchFn: async (url) => {
@@ -159,16 +174,16 @@ describe("deployment plan helpers", () => {
         const urlText = String(url);
         return new Response(
           JSON.stringify({ ok: true }),
-          { status: urlText.endsWith("marketplace3@handlecontract") ? 404 : 200 }
+          { status: urlText.endsWith("marketplc3@handlecontract") ? 404 : 200 }
         );
       },
     });
 
-    expect(subhandle).toBe("marketplace3@handlecontract");
+    expect(subhandle).toBe("marketplc3@handlecontract");
     expect(requested).toEqual([
-      "https://preview.api.handle.me/handles/marketplace1@handlecontract",
-      "https://preview.api.handle.me/handles/marketplace2@handlecontract",
-      "https://preview.api.handle.me/handles/marketplace3@handlecontract",
+      "https://preview.api.handle.me/handles/marketplc1@handlecontract",
+      "https://preview.api.handle.me/handles/marketplc2@handlecontract",
+      "https://preview.api.handle.me/handles/marketplc3@handlecontract",
     ]);
   });
 });

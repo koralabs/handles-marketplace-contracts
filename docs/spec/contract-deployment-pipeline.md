@@ -21,9 +21,10 @@ deploy/<network>/<contract_slug>.yaml
 Each file should contain stable desired state only:
 
 ```yaml
-schema_version: 1
+schema_version: 2
 network: preview
 contract_slug: marketplace
+deployment_handle_slug: marketplc
 build:
   target: validators/marketplace.ak
   kind: validator
@@ -34,6 +35,11 @@ build:
 subhandle_strategy:
   namespace: handlecontract
   format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts:
+    - <current_handle>
+ignored_settings: []
 settings:
   type: marketplace_settings
   values:
@@ -46,11 +52,15 @@ Required stable fields:
 - `schema_version`
 - `network`
 - `contract_slug`
+- `deployment_handle_slug`
 - `build.target`
 - `build.kind`
 - `build.parameters`
 - `subhandle_strategy.namespace`
 - `subhandle_strategy.format`
+- `assigned_handles.settings`
+- `assigned_handles.scripts`
+- `ignored_settings`
 - `settings.type`
 - `settings.values`
 
@@ -59,6 +69,9 @@ For marketplace deployments, the desired YAML must carry the full validator para
 - `build.parameters.authorizers`
 
 Those same stable values should also appear in `settings.values` because they are part of the repo-owned desired on-chain marketplace settings datum.
+
+`deployment_handle_slug` must be 10 characters or fewer and must not contain separators such as `-` or `_`.
+`assigned_handles.scripts` must record the currently assigned live marketplace handle for that network.
 
 Observed-only fields that must not be committed into desired-state YAML:
 - `current_script_hash`

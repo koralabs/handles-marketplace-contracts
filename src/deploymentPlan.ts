@@ -73,20 +73,20 @@ const fetchLiveMarketplaceDeploymentState = async ({
 
 const discoverNextContractSubhandle = async ({
   network,
-  contractSlug,
+  deploymentHandleSlug,
   namespace,
   userAgent,
   fetchFn = fetch,
 }: {
   network: string;
-  contractSlug: string;
+  deploymentHandleSlug: string;
   namespace: string;
   userAgent: string;
   fetchFn?: FetchLike;
 }): Promise<string> => {
   const baseUrl = handlesApiBaseUrlForNetwork(network);
   for (let ordinal = 1; ordinal < 10_000; ordinal += 1) {
-    const candidate = `${contractSlug}${ordinal}@${namespace}`;
+    const candidate = `${deploymentHandleSlug}${ordinal}@${namespace}`;
     const response = await fetchFn(`${baseUrl}/handles/${candidate}`, {
       headers: {
         "User-Agent": userAgent,
@@ -101,7 +101,7 @@ const discoverNextContractSubhandle = async ({
       );
     }
   }
-  throw new Error(`no available SubHandle found for ${contractSlug}@${namespace}`);
+  throw new Error(`no available SubHandle found for ${deploymentHandleSlug}@${namespace}`);
 };
 
 const buildMarketplaceDeploymentPlan = ({
@@ -133,6 +133,8 @@ const buildMarketplaceDeploymentPlan = ({
           current_script_hash: live.currentScriptHash,
           expected_script_hash: expectedScriptHash,
           planned_subhandle: plannedSubhandle,
+          assigned_handles: desired.assignedHandles,
+          ignored_settings: desired.ignoredSettings,
           desired_settings: desired.settings,
         },
         Object.keys({
@@ -141,6 +143,8 @@ const buildMarketplaceDeploymentPlan = ({
           current_script_hash: "",
           expected_script_hash: "",
           planned_subhandle: "",
+          assigned_handles: "",
+          ignored_settings: "",
           desired_settings: "",
         }).sort()
       )
@@ -152,9 +156,14 @@ const buildMarketplaceDeploymentPlan = ({
     contract_slug: desired.contractSlug,
     expected_script_hash: expectedScriptHash,
     expected_subhandle: plannedSubhandle,
+    assigned_handles: {
+      settings: desired.assignedHandles.settings,
+      scripts: [plannedSubhandle],
+    },
     settings: {
       type: desired.settings.type,
       values: desired.settings.values,
+      ignored_paths: desired.ignoredSettings,
     },
   };
   const transactionOrder = driftType === "no_change" ? [] : ["tx-01.cbor"];
@@ -174,6 +183,7 @@ const buildMarketplaceDeploymentPlan = ({
           type: desired.settings.type,
           diff_rows: [],
           desired_values: desired.settings.values,
+          ignored_paths: desired.ignoredSettings,
         },
         subhandle: {
           action: driftType === "no_change" ? "reuse" : "allocate",

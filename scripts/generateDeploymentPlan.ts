@@ -53,7 +53,7 @@ const main = async () => {
       ? live.currentSubhandle
       : await discoverNextContractSubhandle({
           network: desired.network,
-          contractSlug: desired.contractSlug,
+          deploymentHandleSlug: desired.deploymentHandleSlug,
           namespace: desired.subhandleStrategy.namespace,
           userAgent,
         });
