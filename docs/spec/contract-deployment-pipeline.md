@@ -5,6 +5,11 @@ This repo owns the desired on-chain deployment state for marketplace contracts a
 
 The repo should define what ought to be live on `preview`, `preprod`, and `mainnet`. It should not be treated as the storage location for volatile live references such as current settings UTxO refs.
 
+Canonical slug naming for this repo follows the shared rule in `kora-bot/docs/spec/contract-deployment-pipeline.md`:
+- `<app><[ord|mnt|ref|roy]><[mpt]>`
+- `contract_slug`, `script_type`, and `deployment_handle_slug` must match
+- `old_script_type` is legacy migration-only
+
 ## State Model
 - Desired state lives in committed YAML files in this repo.
 - Observed live state is read from chain UTxOs and deployed script hashes.
@@ -23,10 +28,12 @@ Each file should contain stable desired state only:
 ```yaml
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1...
@@ -118,10 +125,10 @@ The canonical observed-state artifact should be JSON and should include:
   "schema_version": 1,
   "repo": "handles-marketplace-contracts",
   "network": "preview",
-  "contract_slug": "marketplace",
+  "contract_slug": "mkpl",
   "current_script_hash": "<hash>",
   "current_settings_utxo_ref": "<tx>#<ix>",
-  "current_subhandle": "marketplace1@handlecontract",
+  "current_subhandle": "mkpl1@handlecontract",
   "settings": {
     "type": "marketplace_settings",
     "values": {}

@@ -14,6 +14,8 @@ type DesiredDeploymentState = {
   schemaVersion: 2;
   network: DeploymentNetwork;
   contractSlug: string;
+  scriptType: string;
+  oldScriptType: string | null;
   deploymentHandleSlug: string;
   build: {
     target: string;
@@ -96,8 +98,14 @@ const parseDesiredDeploymentState = (
     throw new Error(`${sourceLabel} network must be one of preview, preprod, mainnet`);
   }
 
-  const contractSlug = requireString(value, "contract_slug", sourceLabel);
+  const contractSlug = requireShortHandleSlug(value, "contract_slug", sourceLabel);
+  const scriptType = requireShortHandleSlug(value, "script_type", sourceLabel);
   const deploymentHandleSlug = requireShortHandleSlug(value, "deployment_handle_slug", sourceLabel);
+  if (contractSlug !== scriptType || scriptType !== deploymentHandleSlug) {
+    throw new Error(
+      `${sourceLabel} contract_slug, script_type, and deployment_handle_slug must match`
+    );
+  }
   const build = requireObject(value, "build", sourceLabel);
   const buildTarget = requireString(build, "target", `${sourceLabel}.build`);
   const buildKind = requireString(build, "kind", `${sourceLabel}.build`) as BuildKind;
@@ -149,6 +157,8 @@ const parseDesiredDeploymentState = (
     schemaVersion: 2,
     network,
     contractSlug,
+    scriptType,
+    oldScriptType: requireOptionalShortHandleSlug(value, "old_script_type", sourceLabel),
     deploymentHandleSlug,
     build: {
       target: buildTarget,
@@ -265,6 +275,25 @@ const requireShortHandleSlug = (
     throw new Error(`${sourceLabel}.${key} must not contain '-' or '_'`);
   }
   return resolved;
+};
+
+const requireOptionalShortHandleSlug = (
+  value: Record<string, unknown>,
+  key: string,
+  sourceLabel: string
+): string | null => {
+  const resolved = value[key];
+  if (resolved === undefined || resolved === null) {
+    return null;
+  }
+  if (typeof resolved !== "string" || resolved.trim() === "") {
+    throw new Error(`${sourceLabel} must include string field \`${key}\``);
+  }
+  const normalized = resolved.trim();
+  if (normalized.length > 64) {
+    throw new Error(`${sourceLabel}.${key} must be 64 characters or fewer`);
+  }
+  return normalized;
 };
 
 export type {

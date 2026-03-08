@@ -1,9 +1,11 @@
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej

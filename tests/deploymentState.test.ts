@@ -48,10 +48,12 @@ describe("deployment state loader", () => {
 
       expect(state.schemaVersion).toBe(2);
       expect(state.network).toBe(network);
-      expect(state.contractSlug).toBe("marketplace");
-      expect(state.deploymentHandleSlug).toBe("marketplc");
+      expect(state.contractSlug).toBe("mkpl");
+      expect(state.scriptType).toBe("mkpl");
+      expect(state.oldScriptType).toBe("marketplace_contract");
+      expect(state.deploymentHandleSlug).toBe("mkpl");
       expect(state.build).toEqual({
-        target: "validators/marketplace.ak",
+        target: "validators/mkpl.ak",
         kind: "validator",
         parameters: {
           marketplaceAddress,
@@ -85,10 +87,12 @@ describe("deployment state loader", () => {
         `
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1foo
@@ -119,10 +123,12 @@ settings:
         `
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1foo
@@ -151,10 +157,12 @@ settings:
         `
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
 subhandle_strategy:
   namespace: handlecontract
@@ -185,10 +193,12 @@ settings:
         `
 schema_version: 2
 network: preview
-contract_slug: marketplace
-deployment_handle_slug: marketplc
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1build
@@ -221,10 +231,12 @@ settings:
         `
 schema_version: 2
 network: preview
-contract_slug: marketplace
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
 deployment_handle_slug: marketplace
 build:
-  target: validators/marketplace.ak
+  target: validators/mkpl.ak
   kind: validator
   parameters:
     marketplace_address: addr_test1build
