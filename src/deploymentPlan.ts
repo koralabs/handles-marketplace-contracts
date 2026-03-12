@@ -1,9 +1,11 @@
 import crypto from "crypto";
+import { Buffer } from "node:buffer";
 
 import { buildContractArtifacts } from "./buildContract.js";
 import { loadDesiredDeploymentState, type DesiredDeploymentState } from "./deploymentState.js";
 import { deploy } from "./deploy.js";
 import type { Parameters } from "./types.js";
+import { fetchNetworkParameters } from "./utils/index.js";
 
 const REPO_NAME = "handles-marketplace-contracts";
 
@@ -23,6 +25,13 @@ type MarketplaceDeploymentPlan = {
   summaryJson: Record<string, unknown>;
   summaryMarkdown: string;
   deploymentPlanJson: Record<string, unknown>;
+};
+
+type UnsignedMarketplaceDeploymentTxArtifact = {
+  cborBytes: Buffer;
+  cborHex: string;
+  estimatedSignedTxSize: number;
+  maxTxSize: number;
 };
 
 type FetchLike = typeof fetch;
@@ -273,20 +282,24 @@ const buildMarketplaceDeploymentPlan = ({
   };
 };
 
-const buildMarketplaceDeploymentTxCbor = async ({
+const buildMarketplaceDeploymentTxArtifact = async ({
   network,
   handleName,
   changeAddress,
   cborUtxos,
   parameters,
+  deployFn = deploy,
+  fetchNetworkParametersFn = fetchNetworkParameters,
 }: {
   network: string;
   handleName: string;
   changeAddress: string;
   cborUtxos: string[];
   parameters: Parameters;
-}): Promise<string> => {
-  const result = await deploy(
+  deployFn?: typeof deploy;
+  fetchNetworkParametersFn?: typeof fetchNetworkParameters;
+}): Promise<UnsignedMarketplaceDeploymentTxArtifact> => {
+  const result = await deployFn(
     {
       handleName,
       changeBech32Address: changeAddress,
@@ -300,13 +313,37 @@ const buildMarketplaceDeploymentTxCbor = async ({
       result.ok ? "deploy did not return unsigned tx" : String(result.error)
     );
   }
-  return Buffer.from(result.data.toCbor()).toString("hex");
+  const tx = result.data;
+  tx.witnesses.addDummySignatures(1);
+  const estimatedSignedTxSize = tx.calcSize();
+  tx.witnesses.removeDummySignatures(1);
+
+  const networkParametersResult = await fetchNetworkParametersFn(
+    network as "preview" | "preprod" | "mainnet"
+  );
+  if (!networkParametersResult.ok) {
+    throw new Error("Failed to fetch network parameter");
+  }
+  const maxTxSize = networkParametersResult.data.maxTxSize;
+  if (estimatedSignedTxSize > maxTxSize) {
+    throw new Error(
+      `unsigned deployment tx for ${handleName} is too large after adding 1 required signature: ${estimatedSignedTxSize} > ${maxTxSize}`
+    );
+  }
+
+  const cborBytes = Buffer.from(tx.toCbor());
+  return {
+    cborBytes,
+    cborHex: cborBytes.toString("hex"),
+    estimatedSignedTxSize,
+    maxTxSize,
+  };
 };
 
 export {
   buildExpectedMarketplaceScriptHash,
   buildMarketplaceDeploymentPlan,
-  buildMarketplaceDeploymentTxCbor,
+  buildMarketplaceDeploymentTxArtifact,
   discoverNextContractSubhandle,
   fetchLiveMarketplaceDeploymentState,
   handlesApiBaseUrlForNetwork,
@@ -316,4 +353,5 @@ export type {
   DeploymentDriftType,
   LiveMarketplaceDeploymentState,
   MarketplaceDeploymentPlan,
+  UnsignedMarketplaceDeploymentTxArtifact,
 };

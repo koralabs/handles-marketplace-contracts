@@ -5,7 +5,7 @@ This repo owns the desired on-chain deployment state for marketplace contracts a
 
 The repo should define what ought to be live on `preview`, `preprod`, and `mainnet`. It should not be treated as the storage location for volatile live references such as current settings UTxO refs.
 
-Canonical slug naming for this repo follows the shared rule in `kora-bot/docs/spec/contract-deployment-pipeline.md`:
+Canonical slug naming for this repo follows the shared rule in `adahandle-deployments/docs/contract-deployment-pipeline.md`:
 - `<app><[ord|mnt|ref|roy]><[mpt]>`
 - `contract_slug`, `script_type`, and `deployment_handle_slug` must match
 - `old_script_type` is legacy migration-only
@@ -110,13 +110,15 @@ The deployment workflow for this repo should emit:
 - `deployment-plan.json`
 - `summary.md`
 - `summary.json`
-- one or more `tx-XX.cbor` artifacts
+- one or more raw `tx-XX.cbor` artifacts
+- matching `tx-XX.cbor.hex` sidecars when a CBOR artifact is generated
 - optional observed-state snapshot artifacts for debugging and audit
 
 For the first supported marketplace flow:
 - push and pull request runs should emit `deployment-plan.json`, `summary.json`, and `summary.md` for every committed `deploy/<network>/marketplace.yaml`
-- manual dispatch may target one desired-state YAML via `desired_path` and may also emit `tx-01.cbor` when signer-side wallet inputs are supplied to the workflow
+- manual dispatch may target one desired-state YAML via `desired_path` and may also emit `tx-01.cbor` plus `tx-01.cbor.hex` when signer-side wallet inputs are supplied to the workflow
 - artifact metadata should explicitly state whether the CBOR file was generated on that run
+- the planner must fail before artifact upload if the unsigned tx would exceed `maxTxSize` after adding the required signing witness
 
 The canonical observed-state artifact should be JSON and should include:
 

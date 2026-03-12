@@ -4,7 +4,7 @@ import path from "path";
 import {
   buildExpectedMarketplaceScriptHash,
   buildMarketplaceDeploymentPlan,
-  buildMarketplaceDeploymentTxCbor,
+  buildMarketplaceDeploymentTxArtifact,
   discoverNextContractSubhandle,
   fetchLiveMarketplaceDeploymentState,
   loadDesiredDeploymentState,
@@ -90,18 +90,19 @@ const main = async () => {
   );
 
   if (plan.driftType !== "no_change" && changeAddress && cborUtxosJson) {
-    const txCbor = await buildMarketplaceDeploymentTxCbor({
+    const txArtifact = await buildMarketplaceDeploymentTxArtifact({
       network: desired.network,
       handleName: nextSubhandle ?? live.currentSubhandle ?? "",
       changeAddress,
       cborUtxos: JSON.parse(cborUtxosJson),
       parameters: desired.build.parameters,
     });
-    await fs.writeFile(path.join(artifactsDir, "tx-01.cbor"), `${txCbor}\n`);
+    await fs.writeFile(path.join(artifactsDir, "tx-01.cbor"), txArtifact.cborBytes);
+    await fs.writeFile(path.join(artifactsDir, "tx-01.cbor.hex"), `${txArtifact.cborHex}\n`);
     txArtifactGenerated = true;
   }
   if (txArtifactGenerated) {
-    generatedArtifacts.push("tx-01.cbor");
+    generatedArtifacts.push("tx-01.cbor", "tx-01.cbor.hex");
     await fs.writeFile(
       path.join(artifactsDir, "summary.json"),
       `${JSON.stringify(

@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
+import { Ok } from "ts-res";
 
 import {
   buildExpectedMarketplaceScriptHash,
   buildMarketplaceDeploymentPlan,
+  buildMarketplaceDeploymentTxArtifact,
   discoverNextContractSubhandle,
   fetchLiveMarketplaceDeploymentState,
 } from "../src/deploymentPlan.js";
@@ -208,5 +210,68 @@ describe("deployment plan helpers", () => {
     });
 
     expect(subhandle).toBe("mkpl1@handlecontract");
+  });
+
+  test("builds raw CBOR bytes and a matching hex artifact for the unsigned deployment tx", async () => {
+    // Feature: deployment artifacts must write raw CBOR bytes to `tx-01.cbor` and keep the hex form in a separate sidecar.
+    // Failure mode: wallets would reject the artifact because `tx-01.cbor` contained printable hex text instead of CBOR bytes.
+    const tx = {
+      witnessCount: 0,
+      witnesses: {
+        addDummySignatures: (count: number) => {
+          tx.witnessCount += count;
+        },
+        removeDummySignatures: (count: number) => {
+          tx.witnessCount -= count;
+        },
+      },
+      calcSize: () => (tx.witnessCount === 1 ? 222 : 111),
+      toCbor: () => [0x84, 0x01, 0x02],
+    };
+
+    const artifact = await buildMarketplaceDeploymentTxArtifact({
+      network: "preview",
+      handleName: "mkpl4@handlecontract",
+      changeAddress: "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+      cborUtxos: ["abcd"],
+      parameters: desiredState.build.parameters,
+      deployFn: async () => Ok(tx as never),
+      fetchNetworkParametersFn: async () => Ok({ maxTxSize: 300 } as never),
+    });
+
+    expect([...artifact.cborBytes]).toEqual([0x84, 0x01, 0x02]);
+    expect(artifact.cborHex).toBe("840102");
+    expect(artifact.estimatedSignedTxSize).toBe(222);
+    expect(artifact.maxTxSize).toBe(300);
+  });
+
+  test("rejects unsigned deployment tx artifacts that would exceed max tx size after signing", async () => {
+    // Feature: the planner must fail before uploading a tx artifact that only becomes oversized after the wallet adds its required signature.
+    // Failure mode: ops would receive a CBOR file that imports locally but is rejected on submit because the signed tx exceeds protocol size limits.
+    const tx = {
+      witnessCount: 0,
+      witnesses: {
+        addDummySignatures: (count: number) => {
+          tx.witnessCount += count;
+        },
+        removeDummySignatures: (count: number) => {
+          tx.witnessCount -= count;
+        },
+      },
+      calcSize: () => (tx.witnessCount === 1 ? 301 : 200),
+      toCbor: () => [0x80],
+    };
+
+    await expect(
+      buildMarketplaceDeploymentTxArtifact({
+        network: "preview",
+        handleName: "mkpl4@handlecontract",
+        changeAddress: "addr_test1qpzxs06vn7qagrqsm7wtquul8s5drxzk82wwr9qx3886m8lv7yv3mukuwdkne3v3va8dgd3xjkzqv90pu9gsc8hrl2xs9yqkej",
+        cborUtxos: ["abcd"],
+        parameters: desiredState.build.parameters,
+        deployFn: async () => Ok(tx as never),
+        fetchNetworkParametersFn: async () => Ok({ maxTxSize: 300 } as never),
+      })
+    ).rejects.toThrow(/too large after adding 1 required signature/i);
   });
 });
