@@ -6,9 +6,8 @@ import { Result } from "ts-res";
 
 import { optimizedCompiledCode } from "../contracts/plutus-v2/contract.js";
 import { makeSCParametersUplcValues } from "../datum.js";
-import { mayFail, mayFailAsync } from "../helpers/index.js";
+import { fetchApi, mayFail, mayFailAsync } from "../helpers/index.js";
 import { Parameters } from "../types.js";
-import { fetchApi } from "./api.js";
 
 const NETWORK_PARAMETER_URL = (network: NetworkName) =>
   `https://network-status.helios-lang.io/${network}/config`;
