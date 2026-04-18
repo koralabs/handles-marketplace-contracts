@@ -1,5 +1,4 @@
 import fs from "fs/promises";
-
 import YAML from "yaml";
 
 type DeploymentNetwork = "preview" | "preprod" | "mainnet";
