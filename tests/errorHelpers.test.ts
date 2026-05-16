@@ -37,6 +37,10 @@ describe("error and invariant helpers", () => {
     expect(success.ok).toBe(true);
     if (success.ok) expect(success.data).toBe(7);
 
+    const successHandler = vi.fn();
+    expect(success.handle(successHandler).ok).toBe(true);
+    expect(successHandler).not.toHaveBeenCalled();
+
     const handler = vi.fn();
     const failure = mayFail(() => {
       throw new Error("failed-sync");
