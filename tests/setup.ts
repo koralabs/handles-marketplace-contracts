@@ -1,5 +1,6 @@
 import { bytesToHex } from "@helios-lang/codec-utils";
 import {
+  DEFAULT_NETWORK_PARAMS,
   makeAddress,
   makeAssets,
   makeTxOutputId,
@@ -17,7 +18,7 @@ import {
   ScriptDetails,
   ScriptType,
 } from "@koralabs/kora-labs-common";
-import { test } from "vitest";
+import { afterAll, test, vi } from "vitest";
 
 import { HANDLE_POLICY_ID } from "../src/constants/index.js";
 import { unoptimizedCompiledCode } from "../src/contracts/plutus-v2/contract.js";
@@ -28,6 +29,36 @@ import { Parameters } from "../src/types.js";
 
 const network: NetworkName = "preview";
 const ACCOUNT_LOVELACE = 500_000_000n;
+const NETWORK_PARAMETER_URL_PATTERN =
+  /^https:\/\/network-status\.helios-lang\.io\/[^/]+\/config$/;
+
+const installNetworkParametersFixture = () => {
+  const originalFetch = globalThis.fetch.bind(globalThis);
+
+  vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+    const [input, init] = args;
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+
+    if (NETWORK_PARAMETER_URL_PATTERN.test(url)) {
+      return new Response(JSON.stringify(DEFAULT_NETWORK_PARAMS()), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    return originalFetch(input, init);
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+};
+
+installNetworkParametersFixture();
 
 const setup = async () => {
   const emulator = makeEmulator();
