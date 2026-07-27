@@ -165,6 +165,37 @@ describe("deployment plan helpers", () => {
     }
   );
 
+
+
+  test("rejects live marketplace deployment responses without a script hash", async () => {
+    // Feature: deployment planning should fail when the Handles API response lacks a validator hash.
+    // Failure mode: a workflow could plan against an empty script hash and produce misleading deployment artifacts.
+    await expect(
+      fetchLiveMarketplaceDeploymentState({
+        network: "preview",
+        scriptType: "marketplace_contract",
+        userAgent: "codex-test",
+        fetchFn: async () =>
+          new Response(JSON.stringify({ handle: "mkpl9@handlecontract" }), {
+            status: 200,
+          }),
+      })
+    ).rejects.toThrow("missing validatorHash/scriptHash");
+  });
+
+  test("surfaces failed live marketplace deployment lookups with status context", async () => {
+    // Feature: deployment planning should stop on unsuccessful Handles API responses.
+    // Failure mode: a transient or unauthorized API response could be treated as a valid no-change state.
+    await expect(
+      fetchLiveMarketplaceDeploymentState({
+        network: "preprod",
+        scriptType: "marketplace_contract",
+        userAgent: "codex-test",
+        fetchFn: async () => new Response("missing", { status: 503 }),
+      })
+    ).rejects.toThrow("failed to load live marketplace_contract script: HTTP 503");
+  });
+
   test("discovers the next available contract SubHandle ordinal", async () => {
     // Feature: script-hash deployments must allocate the next free <contract_slug><ordinal>@handlecontract name.
     // Failure mode: workflow-generated plans could collide with an already published contract SubHandle.
@@ -192,6 +223,26 @@ describe("deployment plan helpers", () => {
       "https://preview.api.handle.me/handles/mkpl3@handlecontract",
       "https://preview.api.handle.me/handles/mkpl4@handlecontract",
     ]);
+  });
+
+
+
+  test("surfaces SubHandle probe failures with the candidate and status", async () => {
+    // Feature: SubHandle discovery should fail loudly when availability cannot be determined.
+    // Failure mode: planner reruns could skip or reuse contract SubHandles after an ambiguous probe.
+    await expect(
+      discoverNextContractSubhandle({
+        network: "mainnet",
+        deploymentHandleSlug: "mkpl",
+        namespace: "handlecontract",
+        currentSubhandle: "mkpl2@handlecontract",
+        userAgent: "codex-test",
+        fetchFn: async (url) =>
+          new Response("rate limited", {
+            status: String(url).endsWith("mkpl3@handlecontract") ? 429 : 200,
+          }),
+      })
+    ).rejects.toThrow("failed to probe SubHandle mkpl3@handlecontract: HTTP 429");
   });
 
   test("reuses the lowest minted replacement handle before allocating a new ordinal", async () => {
