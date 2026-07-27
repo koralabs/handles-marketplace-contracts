@@ -1,6 +1,6 @@
 {
   "name": "@koralabs/handles-marketplace-contracts",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.",
   "main": "index.js",
   "type": "module",
@@ -39,7 +39,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.12.0",
     "@vitest/coverage-v8": "^4.1.9",
-    "concurrently": "^10.0.3",
+    "concurrently": "^10.0.4",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^15.14.0",
@@ -54,20 +54,20 @@
   "overrides": {
     "ajv": "6.14.0",
     "base-x": "5.0.1",
-    "brace-expansion": "5.0.6",
+    "brace-expansion": "5.0.8",
     "esbuild": "0.28.1",
     "lodash": "4.18.1",
-    "minimatch": "10.2.5",
+    "minimatch": "10.2.6",
     "picomatch": "4.0.4"
   },
   "pnpm": {
     "overrides": {
       "ajv": "6.14.0",
       "base-x": "5.0.1",
-      "brace-expansion": "5.0.6",
+      "brace-expansion": "5.0.8",
       "esbuild": "0.28.1",
       "lodash": "4.18.1",
-      "minimatch": "10.2.5",
+      "minimatch": "10.2.6",
       "picomatch": "4.0.4"
     }
   }
