@@ -81,6 +81,7 @@ describe("common utility helpers", () => {
   it("finds bigint bounds across positive and negative values", () => {
     expect(bigIntMin(7n, -2n, 5n, 0n)).toBe(-2n);
     expect(bigIntMax(7n, -2n, 5n, 0n)).toBe(7n);
+    expect(bigIntMax(-7n, -2n, -5n, 0n)).toBe(0n);
   });
 
   it("resolves sleep after the requested timer delay", async () => {
@@ -115,6 +116,31 @@ describe("common utility helpers", () => {
       handleHex
     );
     expect(convertTxInputToIUTxO(txInputWithoutDatum)).toEqual(withoutDatum);
+  });
+
+  it("omits listing datum cbor when input datum has no inline data", () => {
+    const listing = {
+      address: makeTestAddress(),
+      tx_id: "cd".repeat(32),
+      index: 4,
+      lovelace: 4_500_000,
+      datum: undefined,
+    };
+    const txInput = makeListingTxInputFromListingIUTxO(
+      listing,
+      Buffer.from("hash", "utf8").toString("hex")
+    );
+    const txInputWithoutInlineDatum = {
+      address: txInput.address,
+      id: txInput.id,
+      value: txInput.value,
+      datum: { kind: "HashedTxOutputDatum", data: undefined },
+    };
+
+    expect(convertTxInputToIUTxO(txInputWithoutInlineDatum as any)).toEqual({
+      ...listing,
+      datum: undefined,
+    });
   });
 });
 

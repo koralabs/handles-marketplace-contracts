@@ -1,9 +1,11 @@
 import {
   makeAddress,
+  makeHashedTxOutputDatum,
   makePubKeyHash,
   makeStakingValidatorHash,
   makeValidatorHash,
 } from "@helios-lang/ledger";
+import { makeConstrData } from "@helios-lang/uplc";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -47,5 +49,21 @@ describe("datum helpers", () => {
     expect(decoded.payouts).toEqual([
       { address: payoutAddress.toString(), amountLovelace: 1_000_000n },
     ]);
+  });
+
+  it("rejects non-inline marketplace datums", () => {
+    const hashedDatum = makeHashedTxOutputDatum(makeConstrData(0, []));
+
+    expect(() => decodeDatum(hashedDatum, "preview")).toThrow(
+      "Must be inline datum"
+    );
+  });
+
+  it("rejects parameter datum cbor without inline data", () => {
+    const hashedDatum = makeHashedTxOutputDatum(makeConstrData(0, []));
+
+    expect(() =>
+      decodeSCParametersDatumCbor(hashedDatum.toCbor(), "preview")
+    ).toThrow("Parameter Datum Cbor is not correct");
   });
 });
