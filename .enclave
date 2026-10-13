@@ -1,0 +1,38 @@
+# handles-marketplace-contracts enclave manifest (proposal, ecosystem-ownership-plan row 5.3).
+#
+# Changes to these paths merging into master need operator approval
+# (K.O.R.A.'s merge_pr cards them). Everything else merges freely.
+# Format: one path per line; trailing "/" = directory prefix. "#" = comment.
+# Why each entry is here: CANONICAL_CONTRACT.md. This file is enclaved itself.
+
+.enclave
+CANONICAL_CONTRACT.md
+
+# C1 validator
+validators/
+lib/
+aiken.toml
+aiken.lock
+
+# C2 desired on-chain state
+deploy/
+src/deployed/
+
+# C3 tx builders and datums
+src/buy.ts
+src/list.ts
+src/update.ts
+src/withdraw.ts
+src/datum.ts
+src/redeemer.ts
+src/buildContract.ts
+src/deploy.ts
+src/contracts/
+
+# Deployment plan / state
+src/deploymentPlan.ts
+src/deploymentState.ts
+scripts/generateDeploymentPlan.ts
+
+# Deploy path
+.github/workflows/
