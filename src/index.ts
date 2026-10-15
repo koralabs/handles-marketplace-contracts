@@ -1,5 +1,7 @@
 export * from "./buy.js";
 export * from "./datum.js";
+export * from "./deploymentPlan.js";
+export * from "./deploymentState.js";
 export * from "./deployed/index.js";
 export * from "./list.js";
 export * from "./redeemer.js";

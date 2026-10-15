@@ -60,6 +60,8 @@ artifacts/
 build/
 # Aiken's default documentation export
 docs/
+!docs/
+!docs/**/*.md
 
 # env files
 .env*.local
@@ -69,3 +71,7 @@ lib
 
 # plutus.json
 plutus.json
+.env*
+
+# K.O.R.A executor logs
+.kora/executor-logs/

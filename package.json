@@ -1,6 +1,6 @@
 {
   "name": "@koralabs/handles-marketplace-contracts",
-  "version": "0.2.3",
+  "version": "0.2.11",
   "description": "Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.",
   "main": "index.js",
   "type": "module",
@@ -8,7 +8,8 @@
     "build": "tsc",
     "lint": "concurrently \"aiken fmt --check\" \"npx eslint '**/{src,test}/**/*.{ts,mjs}' --max-warnings=0\"",
     "test:aiken": "concurrently \"aiken fmt --check\" \"aiken check\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cli": "tsx CLI/entrypoint.ts"
   },
   "bin": {
     "marketplace": "bin/marketplace"
@@ -30,21 +31,36 @@
     "dotenv": "^16.4.7",
     "enquirer": "^2.4.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "flatted": "^3.3.2",
-    "ts-res": "^1.3.0"
+    "flatted": "^3.4.2",
+    "ts-res": "^1.3.0",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "@types/node": "^22.10.7",
-    "concurrently": "^9.1.2",
-    "eslint": "^9.18.0",
-    "eslint-config-prettier": "^9.1.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.12.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^9.1.2",
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
-    "tsx": "^4.19.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "ajv": "6.14.0",
+    "base-x": "5.0.1",
+    "brace-expansion": "5.0.12",
+    "esbuild": "0.28.1",
+    "lodash": "4.18.1",
+    "minimatch": "10.2.6",
+    "picomatch": "4.0.4",
+    "@humanfs/node": "0.16.8",
+    "shell-quote": "1.11.0",
+    "source-map-js": "1.2.2"
   }
 }

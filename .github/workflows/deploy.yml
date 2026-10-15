@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 jobs:
   deploy:
     name: Deploying from ${{ github.ref_name }}
+    environment: mainnet
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code

@@ -1,6 +1,11 @@
 import { Parameters } from "../../src/types.js";
 
 export const configs: Record<string, Parameters> = {
+  mainnet: {
+    marketplaceAddress:
+      "addr1xysgj7dndz9ql57jsh5y0ss258d0yl8wqfj4hy00ulyw6ueq39umx6y2plfa9p0gglpq4gw67f7wuqn9twg7le7ga4es4uake8",
+    authorizers: ["4da965a049dfd15ed1ee19fba6e2974a0b79fc416dd1796a1f97f5e1"],
+  },
   preprod: {
     marketplaceAddress:
       "addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf",

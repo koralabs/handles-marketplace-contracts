@@ -1,0 +1,27 @@
+schema_version: 2
+network: preprod
+contract_slug: mkpl
+script_type: mkpl
+old_script_type: marketplace_contract
+deployment_handle_slug: mkpl
+build:
+  target: validators/mkpl.ak
+  kind: validator
+  parameters:
+    marketplace_address: addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf
+    authorizers:
+      - "c4c2d1d080900cb6d25d87b774954410d01fd3e6bb21e25d09130fa5"
+subhandle_strategy:
+  namespace: handlecontract
+  format: contract_slug_ordinal
+assigned_handles:
+  settings: []
+  scripts:
+    - test_market_5
+ignored_settings: []
+settings:
+  type: marketplace_settings
+  values:
+    marketplace_address: addr_test1qrysw490dkldwfqwpkwmnq39mcvt9xzy8kxxqnafh37lcvv764lmjcyrjyh8c8fjkkt22r47mheznsg47t7ly9yv8fysevzwtf
+    authorizers:
+      - "c4c2d1d080900cb6d25d87b774954410d01fd3e6bb21e25d09130fa5"

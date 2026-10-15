@@ -1,0 +1,32 @@
+name: Deployment Plan
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      desired_path:
+        description: Desired deployment YAML path
+        required: false
+        default: deploy/preview/marketplace.yaml
+      change_address:
+        description: Optional deployer change address for unsigned tx generation
+        required: false
+      cbor_utxos_json:
+        description: Optional JSON array of deployer wallet input CBOR values for unsigned tx generation
+        required: false
+
+jobs:
+  deployment-plan:
+    uses: koralabs/adahandle-deployments/.github/workflows/contract-deployment-plan.yml@master
+    secrets: inherit
+    with:
+      desired_path: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.desired_path || '' }}
+      change_address: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.change_address || '' }}
+      cbor_utxos_json: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.cbor_utxos_json || '' }}
+      node_version: "20.18"
+      timeout_minutes: 10
+      kora_user_agent: ${{ vars.KORA_USER_AGENT }}
+      setup_command: npm install -g pnpm
+      install_command: pnpm install --frozen-lockfile
+      planner_command: pnpm exec tsx scripts/generateDeploymentPlan.ts
