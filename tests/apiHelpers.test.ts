@@ -17,7 +17,7 @@ import type { Parameters } from "../src/types.js";
 import {
   fetchApi as fetchUtilsApi,
   fetchApiJson as fetchUtilsApiJson,
-} from "../src/utils/api.js";
+} from "../src/helpers/api.js";
 import { fetchDeployedScript, getUplcProgram } from "../src/utils/contract.js";
 
 vi.mock("cross-fetch", () => ({
@@ -93,10 +93,9 @@ describe("API request helpers", () => {
     );
   });
 
-  it("sends utility API requests through the global fetch implementation", async () => {
+  it("sends relocated utility API requests through cross-fetch", async () => {
     const response = makeJsonResponse({ ok: true });
-    const globalFetchMock = vi.fn(async () => response);
-    vi.stubGlobal("fetch", globalFetchMock);
+    fetchMock.mockResolvedValue(response);
 
     await expect(
       fetchUtilsApi("marketplace/listings", {
@@ -106,7 +105,7 @@ describe("API request helpers", () => {
       })
     ).resolves.toBe(response);
 
-    expect(globalFetchMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       `${HANDLE_API_ENDPOINT}/marketplace/listings`,
       {
         headers: expectedApiHeaders({ "x-request-id": "utils-request" }),
@@ -118,8 +117,7 @@ describe("API request helpers", () => {
 
   it("adds JSON headers before reading utility API response bodies", async () => {
     const payload = { scripts: ["marketplace_contract"] };
-    const globalFetchMock = vi.fn(async () => makeJsonResponse(payload));
-    vi.stubGlobal("fetch", globalFetchMock);
+    fetchMock.mockResolvedValue(makeJsonResponse(payload));
 
     await expect(
       fetchUtilsApiJson("scripts", {
@@ -127,7 +125,7 @@ describe("API request helpers", () => {
       })
     ).resolves.toEqual(payload);
 
-    expect(globalFetchMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       `${HANDLE_API_ENDPOINT}/scripts`,
       {
         headers: expectedApiHeaders({
@@ -155,24 +153,20 @@ describe("contract utility helpers", () => {
       latest: true,
       type: "marketplace_contract",
     };
-    const globalFetchMock = vi.fn(async () => makeJsonResponse(scriptDetails));
-    vi.stubGlobal("fetch", globalFetchMock);
+    fetchMock.mockResolvedValue(makeJsonResponse(scriptDetails));
 
     await expect(fetchDeployedScript("preview")).resolves.toEqual(
       scriptDetails
     );
 
-    expect(globalFetchMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       `${HANDLE_API_ENDPOINT}/scripts?latest=true&type=marketplace_contract`,
       { headers: expectedApiHeaders() }
     );
   });
 
   it("wraps deployed script lookup failures with the target network", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => makeJsonResponse({ error: "missing" }, false))
-    );
+    fetchMock.mockResolvedValue(makeJsonResponse({ error: "missing" }, false));
 
     await expect(fetchDeployedScript("preprod")).rejects.toThrow(
       "Not deployed on preprod"
