@@ -1,9 +1,10 @@
-import crypto from "crypto";
 import { Buffer } from "node:buffer";
 
+import crypto from "crypto";
+
 import { buildContractArtifacts } from "./buildContract.js";
-import { loadDesiredDeploymentState, type DesiredDeploymentState } from "./deploymentState.js";
 import { deploy } from "./deploy.js";
+import { type DesiredDeploymentState, loadDesiredDeploymentState } from "./deploymentState.js";
 import type { Parameters } from "./types.js";
 import { fetchNetworkParameters } from "./utils/index.js";
 

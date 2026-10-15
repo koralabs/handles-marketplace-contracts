@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
-
 import { describe, expect, test } from "vitest";
+import { YAMLParseError } from "yaml";
 
 import {
   loadDesiredDeploymentState,
@@ -12,6 +12,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 describe("deployment state loader", () => {
+  test("preserves the cause and message of malformed YAML", () => {
+    // Feature: invalid YAML retains its real parser diagnostics without changing the wrapper error.
+    // Failure mode/negative control: removing { cause: error } fails the cause-class assertion.
+    const error = (() => {
+      try {
+        parseDesiredDeploymentState("key: one\nkey: two\n", "broken fixture");
+      } catch (error) {
+        return error as Error;
+      }
+      return expect.fail("expected malformed YAML to be rejected");
+    })();
+
+    expect(error.constructor).toBe(Error);
+    expect(error.message).toBe(
+      "broken fixture is not valid YAML: Map keys must be unique at line 2, column 1:\n\nkey: one\nkey: two\n^\n"
+    );
+    expect(error.cause).toBeInstanceOf(YAMLParseError);
+    expect((error.cause as YAMLParseError).code).toBe("DUPLICATE_KEY");
+    expect((error.cause as YAMLParseError).pos).toEqual([9, 10]);
+  });
+
   test.each([
     {
       network: "preview",
