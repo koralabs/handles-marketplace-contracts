@@ -128,6 +128,10 @@ describe.sequential("marketplace orchestration refusals", () => {
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, datumCbor: undefined } }), network))).toBe("Deploy script's datum cbor is empty");
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, refScriptUtxo: undefined } }), network))).toBe("Deployed script UTxO is not defined");
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, cbor: "zz" } }), network))).toMatch(/^Decoding Uplc Program error/);
+      expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, unoptimizedCbor: "zz" } }), network))).toMatch(/^Decoding Unoptimized Uplc Program error/);
+      expect(errorOf(await update(uCfg({ newPayouts: [{ address: "not-an-address", amountLovelace: 100_000_000n }], changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toMatch(/^Building Datum error/);
+      // an explicit collateral UTxO is accepted in place of the automatic pick
+      expect(errorOf(await update(uCfg({ collateralCborUtxo: ownerUtxos[0], changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toBe("OK");
       expect(errorOf(await update(uCfg({ changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toBe("OK");
     }
   );
