@@ -23,6 +23,15 @@ describe("contract build helpers", () => {
     expect(decodeSCParametersDatumCbor(artifacts.datumCbor, "mainnet")).toEqual(
       parameters
     );
+
+    // Same parameters rebuild byte-identical artifacts (what "deterministic" promises).
+    expect(buildContractArtifacts({ parameters })).toEqual(artifacts);
+
+    // Negative control: a different authorizer must change the datum, so the equality above can fail.
+    const other = buildContractArtifacts({
+      parameters: { ...parameters, authorizers: ["5da965a049dfd15ed1ee19fba6e2974a0b79fc416dd1796a1f97f5e1"] },
+    });
+    expect(other.datumCbor).not.toBe(artifacts.datumCbor);
   });
 
   test("logs a deployable script detail keyed by validator address", () => {
