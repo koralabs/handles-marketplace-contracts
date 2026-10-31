@@ -5,6 +5,7 @@ import { makeAddress, makeTxOutputId } from "@helios-lang/ledger";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { describe, expect } from "vitest";
 
+import { buy, buyWithAuth } from "../src/buy.js";
 import { deploy } from "../src/deploy.js";
 import { invariant } from "../src/helpers/index.js";
 import { list } from "../src/list.js";
@@ -25,6 +26,7 @@ describe.sequential("marketplace orchestration refusals", () => {
       user2Wallet,
       testHandleName,
       network,
+      parameters,
       refScriptDetail,
       txOutputIds,
     }) => {
@@ -63,6 +65,32 @@ describe.sequential("marketplace orchestration refusals", () => {
       const listingIUtxo = convertTxInputToIUTxO(await emulator.getUtxo(txOutputIds.listingTxOutputId));
 
       const ownerUtxos = await cbors(user1Wallet);
+
+      // --- buy and buyWithAuth (same refusals)
+      const bCfg = (over = {}) => ({
+        cborUtxos: user2Utxos,
+        changeBech32Address: user2Wallet.address.toBech32(),
+        handleHex,
+        listingIUtxo,
+        customRefScriptDetail: refScriptDetail,
+        ...over,
+      });
+      const authCfg = (over = {}) => bCfg({ authorizerPubKeyHash: parameters.authorizers[0], ...over });
+      expect(errorOf(await buyWithAuth(authCfg({ authorizerPubKeyHash: "00".repeat(28) }) as never, network))).toBe("Authorizer's PubKey Hash is not correct");
+      for (const [name, fn, cfg] of [
+        ["buy", (c: never) => buy(c, network), bCfg],
+        ["buyWithAuth", (c: never) => buyWithAuth(c, network), authCfg],
+      ] as const) {
+        const run = async (over = {}) => errorOf(await fn(cfg(over) as never));
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, cbor: undefined } }), name).toBe("Deploy script cbor is empty");
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, datumCbor: undefined } }), name).toBe("Deploy script's datum cbor is empty");
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, refScriptUtxo: undefined } }), name).toBe("Deployed script UTxO is not defined");
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, datumCbor: "zz" } }), name).toMatch(/^Deployed script's datum cbor is invalid/);
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, cbor: "zz" } }), name).toMatch(/^Decoding Uplc Program error/);
+        expect(await run({ customRefScriptDetail: { ...refScriptDetail, unoptimizedCbor: "zz" } }), name).toMatch(/^Decoding Unoptimized Uplc Program error/);
+        expect(await run({ listingIUtxo: { ...listingIUtxo, datum: undefined } }), name).toBe("Listing UTxO datum not found");
+        expect(await run({ listingIUtxo: { ...listingIUtxo, datum: "00" } }), name).toMatch(/^Decoding Datum Cbor error/);
+      }
 
       // --- withdraw
       const wCfg = (over = {}) => ({
