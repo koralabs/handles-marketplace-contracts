@@ -14,10 +14,6 @@ import {
   fetchApiJson as fetchHelperApiJson,
 } from "../src/helpers/api.js";
 import type { Parameters } from "../src/types.js";
-import {
-  fetchApi as fetchUtilsApi,
-  fetchApiJson as fetchUtilsApiJson,
-} from "../src/helpers/api.js";
 import { fetchDeployedScript, getUplcProgram } from "../src/utils/contract.js";
 
 vi.mock("cross-fetch", () => ({
@@ -92,53 +88,9 @@ describe("API request helpers", () => {
       }
     );
   });
-
-  it("sends relocated utility API requests through cross-fetch", async () => {
-    const response = makeJsonResponse({ ok: true });
-    fetchMock.mockResolvedValue(response);
-
-    await expect(
-      fetchUtilsApi("marketplace/listings", {
-        method: "PUT",
-        headers: { "x-request-id": "utils-request" },
-        body: "updated",
-      })
-    ).resolves.toBe(response);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${HANDLE_API_ENDPOINT}/marketplace/listings`,
-      {
-        headers: expectedApiHeaders({ "x-request-id": "utils-request" }),
-        method: "PUT",
-        body: "updated",
-      }
-    );
-  });
-
-  it("adds JSON headers before reading utility API response bodies", async () => {
-    const payload = { scripts: ["marketplace_contract"] };
-    fetchMock.mockResolvedValue(makeJsonResponse(payload));
-
-    await expect(
-      fetchUtilsApiJson("scripts", {
-        headers: { "x-request-id": "utils-json" },
-      })
-    ).resolves.toEqual(payload);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${HANDLE_API_ENDPOINT}/scripts`,
-      {
-        headers: expectedApiHeaders({
-          "x-request-id": "utils-json",
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        }),
-      }
-    );
-  });
 });
 
-describe("contract utility helpers", () => {
+describe("contract API helpers", () => {
   it("applies marketplace parameters to the optimized UPLC program", async () => {
     const result = await getUplcProgram(makeParameters());
 
