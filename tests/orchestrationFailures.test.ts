@@ -138,10 +138,12 @@ describe.sequential("marketplace orchestration refusals", () => {
       const scriptChange = makeAddress("addr_test1wqrtsp2yrgyzphvvqhvemg6ntmlvu3jj5kwecxvn5dex53sjrmm36").toBech32();
       expect(errorOf(await withdraw(wCfg({ changeBech32Address: scriptChange }), network))).toBe("Must be Base Address to perform update");
       expect(errorOf(await update(uCfg({ changeBech32Address: scriptChange }), network))).toBe("Must be Base Address to perform update");
-      const owner = { changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos, collateralCborUtxo: ownerUtxos[0] };
+      // an explicit collateral UTxO (here one the owner's own UTxO list does not contain) must be the one used
+      const collateralCborUtxo = user2Utxos[0];
+      const owner = { changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos, collateralCborUtxo };
       for (const built of [await withdraw(wCfg(owner), network), await update(uCfg(owner), network)]) {
         invariant(built.ok, "owner tx with collateral failed");
-        expect(built.data.tx.body.collateral.map((i) => i.id.toString())).toContain(decodeTxInput(ownerUtxos[0]).id.toString());
+        expect(built.data.tx.body.collateral.map((i) => i.id.toString())).toEqual([decodeTxInput(collateralCborUtxo).id.toString()]);
       }
     }
   );
