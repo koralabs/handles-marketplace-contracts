@@ -81,8 +81,8 @@ describe.sequential("deploy with a seed", () => {
     });
     expect(saved.refScriptUtxo).toMatch(/^[0-9a-f]{64}#0$/);
     expect(saved.refScriptAddress).toMatch(/^addr_test1/);
-    expect(saved.cbor).toBeTruthy();
-    expect(saved.datumCbor).toBeTruthy();
+    expect(saved.cbor).toMatch(/^[0-9a-f]+$/);
+    expect(saved.datumCbor).toMatch(/^[0-9a-f]+$/);
     expect(saved.validatorHash).toMatch(/^[0-9a-f]{56}$/);
     await fs.rm(dir, { recursive: true });
   });
