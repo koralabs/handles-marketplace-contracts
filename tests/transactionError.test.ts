@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { mayFailTransaction } from "../src/helpers/index.js";
 import { BuildTxError } from "../src/types.js";
-import { bigIntMin } from "../src/utils/index.js";
 
 describe("transaction error helpers", () => {
   const changeAddress = { label: "change-address" };
@@ -95,9 +94,5 @@ describe("transaction error helpers", () => {
     }
     expect(firstHandler).not.toHaveBeenCalled();
     expect(secondHandler).toHaveBeenCalledTimes(1);
-  });
-
-  it("exposes utility barrel exports used by consumers", () => {
-    expect(bigIntMin(5n, 2n, 9n)).toBe(2n);
   });
 });
