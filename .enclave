@@ -1,0 +1,15 @@
+# Files whose change the operator must review. Exact repo-root paths only. Why each: CANONICAL_CONTRACT.md.
+# On-chain Aiken source (what the validator enforces):
+validators/mkpl.ak
+lib/common/types.ak
+lib/common/utils.ak
+lib/marketplace/types.ak
+lib/marketplace/utils.ak
+lib/marketplace/validation.ak
+# Deployed script parameters (fee address and discount authorizers change the script hash and who may buy at a discount):
+deploy/mainnet/marketplace.yaml
+deploy/preprod/marketplace.yaml
+deploy/preview/marketplace.yaml
+# The contract and its manifest protect themselves:
+.enclave
+CANONICAL_CONTRACT.md
