@@ -11,3 +11,6 @@
 - [Technical Spec](./spec/spec.md)
 - [Contract Deployment Pipeline](./spec/contract-deployment-pipeline.md)
 - [Data and Validation](./spec/data-and-validation.md)
+
+## Policy proposals (not active)
+- [Canonical contract and enclave draft](./proposals/phase5-handles-marketplace-contracts/README.md): operator review required.
