@@ -128,6 +128,8 @@ describe.sequential("marketplace orchestration refusals", () => {
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, datumCbor: undefined } }), network))).toBe("Deploy script's datum cbor is empty");
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, refScriptUtxo: undefined } }), network))).toBe("Deployed script UTxO is not defined");
       expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, cbor: "zz" } }), network))).toMatch(/^Decoding Uplc Program error/);
+      expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, refScriptAddress: undefined } }), network))).toBe("Deployed script UTxO is not defined");
+      expect(errorOf(await update(uCfg({ customRefScriptDetail: { ...refScriptDetail, unoptimizedCbor: "zz" } }), network))).toMatch(/^Decoding Unoptimized Uplc Program error/);
       expect(errorOf(await update(uCfg({ changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toBe("OK");
     }
   );
