@@ -1,7 +1,7 @@
 // Behavior of list/withdraw/update/deploy when the caller or the deployed-script metadata is wrong:
 // each must refuse with a specific error instead of building a transaction that could mis-spend a handle.
 import { bytesToHex } from "@helios-lang/codec-utils";
-import { makeAddress, makeTxOutputId } from "@helios-lang/ledger";
+import { decodeTxInput, makeAddress, makeTxOutputId } from "@helios-lang/ledger";
 import { AssetNameLabel } from "@koralabs/kora-labs-common";
 import { describe, expect } from "vitest";
 
@@ -133,6 +133,16 @@ describe.sequential("marketplace orchestration refusals", () => {
       // an explicit collateral UTxO is accepted in place of the automatic pick
       expect(errorOf(await update(uCfg({ collateralCborUtxo: ownerUtxos[0], changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toBe("OK");
       expect(errorOf(await update(uCfg({ changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos }), network))).toBe("OK");
+
+      // --- refusals shared by withdraw and update, and the optional collateral input
+      const scriptChange = makeAddress("addr_test1wqrtsp2yrgyzphvvqhvemg6ntmlvu3jj5kwecxvn5dex53sjrmm36").toBech32();
+      expect(errorOf(await withdraw(wCfg({ changeBech32Address: scriptChange }), network))).toBe("Must be Base Address to perform update");
+      expect(errorOf(await update(uCfg({ changeBech32Address: scriptChange }), network))).toBe("Must be Base Address to perform update");
+      const owner = { changeBech32Address: user1Wallet.address.toBech32(), cborUtxos: ownerUtxos, collateralCborUtxo: ownerUtxos[0] };
+      for (const built of [await withdraw(wCfg(owner), network), await update(uCfg(owner), network)]) {
+        invariant(built.ok, "owner tx with collateral failed");
+        expect(built.data.tx.body.collateral.map((i) => i.id.toString())).toContain(decodeTxInput(ownerUtxos[0]).id.toString());
+      }
     }
   );
 
