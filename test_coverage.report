@@ -1,177 +1,556 @@
 FORMAT_VERSION=1
 REPO=handles-marketplace-contracts
-TIMESTAMP_UTC=2026-02-22T20:19:29Z
+TIMESTAMP_UTC=2026-11-01T00:26:51Z
 THRESHOLD_LINES=90
 THRESHOLD_BRANCHES=90
-TOTAL_LINES_PCT=96.26
-TOTAL_BRANCHES_PCT=94.59
-STATUS=partial
+TOTAL_LINES_PCT=100.00
+TOTAL_BRANCHES_PCT=97.36
+STATUS=fail
 SOURCE_PATHS=src/{datum.ts,redeemer.ts};src/helpers/{index.ts,common/invariant.ts,error/{convert.ts,handleable.ts,handleableAsync.ts,tx.ts,index.ts}};src/contracts/plutus-v2/contract.ts;src/utils/index.ts
 EXCLUDED_PATHS=src/{buy.ts,list.ts,update.ts,withdraw.ts,deploy.ts,buildContract.ts,config.ts,index.ts,types.ts}:integration-heavy-cli-and-transaction-orchestration-paths-with-additional-branch-gaps-still-covered-by-standard-tests; src/helpers/{api.ts,config/**,blockfrost/**}:external-provider-coupled-paths-not-deterministic-for-local-branch-measurement; src/utils/{api.ts,common.ts,contract.ts}:runtime-provider-coupled-helpers-covered-by-integration-suite-but-excluded-from-branch-threshold-scope; src/deployed/**:deployment-artifact-loaders; src/constants/index.ts:constant-surface-with-uncovered-branch-instrumentation
-LANGUAGE_SUMMARY=nodejs:lines=96.26,branches=94.59,tool=vitest-v8,status=pass;aiken:lines=NA,branches=NA,tool=aiken,status=na,note=aiken-toolchain-incompatibility-on-local-stdlib-check
+LANGUAGE_SUMMARY=nodejs:lines=100.00,branches=97.36,tool=vitest-v8,status=pass;aiken:lines=NA,branches=NA,tool=aiken,status=fail,note=aiken-check-failed
 
 === RAW_OUTPUT_NPM_TEST ===
 
-> @koralabs/handles-marketplace-contracts@0.2.4 test
+> @koralabs/handles-marketplace-contracts@0.2.11 test
 > vitest run
 
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
 
- RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
+ RUN  v4.1.11 /tmp/c7-hm
 
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler
- ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor
- ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts
-(node:1180423) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/deploymentState.test.ts > deployment state loader > preserves the cause and message of malformed YAML 5ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'preview' desired deployment YAML fixture into the normalized shape 7ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'preprod' desired deployment YAML fixture into the normalized shape 3ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'mainnet' desired deployment YAML fixture into the normalized shape 2ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects observed-only live fields inside desired deployment YAML 2ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects missing nested settings values 2ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects missing build parameters required for hash derivation 1ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects mismatched build parameters and settings values 2ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects long deployment handle slugs 4ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts +0 ADA to 0n lovelace 2ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 1 ADA to 1000000n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 0.123456 ADA to 123456n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 9e-7 ADA to 0n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 1.0000019 ADA to 1000001n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 0.30000000000000004 ADA to 300000n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 10000000000.123457 ADA to 10000000000123457n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA NaN 1ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA Infinity 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA -Infinity 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > uses the supplied seed "test wallet seed phrase" 1ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > uses the supplied seed "  supplied seed phrase  " 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > prompts when the seed option is undefined 1ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > prompts when the seed option is "" 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'missing seed' answer 1ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'empty seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'blank seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'numeric seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'null seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > reports cancelled or rejected prompts ({}) 21ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > reports cancelled or rejected prompts ("") 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy 3ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure 1ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler 20ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects malformed YAML before reading deployment fields 27ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects a scalar document before reading deployment fields 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an array document before reading deployment fields 2ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported schema version 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported network 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported build kind 4ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported subhandle format 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects mismatched slugs 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects hyphenated slugs 4ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects underscored slugs 1ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects empty authorizers 1ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects blank assigned handle 1ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects non-array ignored settings 1ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'buy with zero payout offset' as the expected constructor data 2ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'buy with a later payout output offset' as the expected constructor data 0ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'withdraw or update' as the expected constructor data 0ms
+ ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor 3ms
+ ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts 1ms
+ ✓ tests/datum.test.ts > datum helpers > rejects non-inline marketplace datums 1ms
+ ✓ tests/datum.test.ts > datum helpers > rejects parameter datum cbor without inline data 1ms
+ ✓ tests/buildContract.test.ts > contract build helpers > builds deterministic artifacts for marketplace parameters 60ms
+ ✓ tests/buildContract.test.ts > contract build helpers > logs a deployable script detail keyed by validator address 19ms
+ ✓ tests/helperUtilities.test.ts > configuration helpers > loads dotenv files and reads typed env values 3ms
+ ✓ tests/helperUtilities.test.ts > configuration helpers > returns explicit errors for missing or invalid env values 1ms
+ ✓ tests/helperUtilities.test.ts > blockfrost network helpers > detects supported Blockfrost networks from key prefixes 0ms
+ ✓ tests/helperUtilities.test.ts > blockfrost network helpers > rejects unsupported prefixes before constructing a client 1ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > finds bigint bounds across positive and negative values 0ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > resolves sleep after the requested timer delay 2ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > round-trips listing IUTxOs through TxInput conversion 5ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > omits listing datum cbor when input datum has no inline data 2ms
+ ✓ tests/helperUtilities.test.ts > contract utility helpers > fetches network parameters from the Helios status endpoint 1ms
+ ✓ tests/helperUtilities.test.ts > contract utility helpers > wraps network parameter fetch failures as Result errors 0ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > returns the built transaction and dump on success 3ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > wraps validation failures with the failed transaction details 3ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > uses the latest handler when transaction building throws 1ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'compiled script CBOR' 27ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'parameters datum CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'reference script UTxO' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'reference script address' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'compiled script CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'parameters datum CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'reference script UTxO' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'reference script address' 0ms
+ ✓ tests/apiHelpers.test.ts > API request helpers > sends helper API requests through cross-fetch with expected headers 5ms
+ ✓ tests/apiHelpers.test.ts > API request helpers > adds JSON headers before reading helper API response bodies 1ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > applies marketplace parameters to the optimized UPLC program 42ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > fetches the latest deployed marketplace script details 1ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > wraps deployed script lookup failures with the target network 1ms
+ ✓ tests/configAndTransactionCoverage.test.ts > top-level configuration loader > returns the configured Blockfrost key with its derived network 303ms
+ ✓ tests/configAndTransactionCoverage.test.ts > top-level configuration loader > rejects unsupported Blockfrost key network prefixes 4ms
+ ✓ tests/configAndTransactionCoverage.test.ts > deployed marketplace script metadata > exposes the latest preview marketplace deployment by script address 3ms
+ ✓ tests/configAndTransactionCoverage.test.ts > transaction logger coverage > builds transactions when the base UPLC logger has no reset hook 3ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > expected script hash changes when committed marketplace build parameters change 20ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds a no-change deployment plan when live and expected hashes match 6ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds a deployment transaction plan when the live hash differs 4ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'preview' Handles API 8ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'preprod' Handles API 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'mainnet' Handles API 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > rejects live marketplace deployment responses without a script hash 1ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > surfaces failed live marketplace deployment lookups with status context 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > discovers the next available contract SubHandle ordinal 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > surfaces SubHandle probe failures with the candidate and status 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > reuses the lowest minted replacement handle before allocating a new ordinal 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds raw CBOR bytes and a matching hex artifact for the unsigned deployment tx 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > rejects unsigned deployment tx artifacts that would exceed max tx size after signing 0ms
 stdout | tests/marketplace.test.ts
+Deploying to preview network...
+
+stdout | tests/orchestrationFailures.test.ts
 Deploying to preview network...
 
 stdout | tests/marketplace.test.ts
 {
   lockerScript: {
-    script: '82018282041a06443dc68200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    script: '82018282041a0c0927738200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
     type: 'Native',
-    address: 'addr_test1wqc560tjh0es6kgjgetz3809dcaahalhhn4sz7aus7cqqgq8zh29a'
+    address: 'addr_test1wpm8pvypwareva7lx9cwnkzj4wjgz3l0w4y6e2pqzufjtvswyaxwk'
   }
 }
+
+stdout | tests/orchestrationFailures.test.ts
+{
+  lockerScript: {
+    script: '82018282041a0c0927738200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wpm8pvypwareva7lx9cwnkzj4wjgz3l0w4y6e2pqzufjtvswyaxwk'
+  }
+}
+
+stdout | tests/marketplace.test.ts
 Deployed!!!
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 472ms
+stdout | tests/orchestrationFailures.test.ts
+Deployed!!!
+
+stdout | tests/deploySubmit.test.ts
+Deploying to preview network...
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 768ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 459ms
+stdout | tests/deploySubmit.test.ts
+{
+  lockerScript: {
+    script: '82018282041a0c0927738200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wpm8pvypwareva7lx9cwnkzj4wjgz3l0w4y6e2pqzufjtvswyaxwk'
+  }
+}
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
 stdout | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive
 Error: Tx Build Error: need 1024978245 lovelace, but only have 502116210
+
+stdout | tests/deploySubmit.test.ts
+Deployed!!!
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
 
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 468ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 473ms
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+Deploying to preview network...
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 501ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 393ms
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+{
+  lockerScript: {
+    script: '82018282041a0c0927738200581c72ed9cc45ef8d8f3c7eed2a83345ed7e06ceff734a1087de01eaab17',
+    type: 'Native',
+    address: 'addr_test1wzmvfndw8gzqx4euds0ahqj532y9x3fkssd6u3xm7nq3g2scam20s'
+  }
+}
+
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+Deploying to preview network...
+
+ ✓ tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update 88ms
+ ✓ tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address 4ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 12ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 26ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 10ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 5ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy) 16ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 10ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 23ms
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 404ms
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 475ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 9ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 15ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 17ms
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Deploying to preview network...
 
- Test Files  3 passed (3)
-      Tests  20 passed (20)
-   Start at  12:19:15
-   Duration  6.45s (transform 139ms, setup 0ms, collect 2.09s, tests 4.44s, environment 0ms, prepare 149ms)
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+{
+  lockerScript: {
+    script: '82018282041a0c0927738200581c00b7847c89d5721592fc0cc8932f50a8f8258b39b93861140a1b99fb',
+    type: 'Native',
+    address: 'addr_test1wzthwgm6e3s22j78e9yx250mr7ech82xkkahx796wmx6tuseadgue'
+  }
+}
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Submitting Tx...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Waiting for Transaction to be confirmed...
+
+stderr | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Warning: mempool not empty (hint: use 'network.tick()')
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Transaction confirmed, saving to file...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Saved ScriptDetail to preview-deployed.json
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given
+Deploying to preview network...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given
+{
+  lockerScript: {
+    script: '82018282041a0c0927738200581c00b7847c89d5721592fc0cc8932f50a8f8258b39b93861140a1b99fb',
+    type: 'Native',
+    address: 'addr_test1wzthwgm6e3s22j78e9yx250mr7ech82xkkahx796wmx6tuseadgue'
+  }
+}
+
+ ✓ tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details 246ms
+ ✓ tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given 118ms
+
+ Test Files  16 passed (16)
+      Tests  117 passed (117)
+   Start at  17:26:44
+   Duration  1.62s (transform 1.13s, setup 0ms, import 6.80s, tests 1.30s, environment 1ms)
 
 
 === RAW_OUTPUT_NPM_TEST_AIKEN ===
 
-> @koralabs/handles-marketplace-contracts@0.2.4 test:aiken
+> @koralabs/handles-marketplace-contracts@0.2.11 test:aiken
 > concurrently "aiken fmt --check" "aiken check"
 
-[1]     Compiling koralabs/handles-marketplace-contracts 0.0.0 (/home/jesse/src/koralabs/handles-marketplace-contracts)
-[0] aiken fmt --check exited with code 0
-[1]     Compiling aiken-lang/stdlib 1.9.0 (/home/jesse/src/koralabs/handles-marketplace-contracts/build/packages/aiken-lang-stdlib)
-[1] [31m        Error aiken::check::unknown::type[0m
-[1] 
-[1]   [31m×[0m While trying to make sense of your code...
-[1] [31m  ╰─▶ [0mI found a reference to an unknown type.
-[1] [31m      [0m
-[1]     ╭─[[36;1;4m/home/jesse/src/koralabs/handles-marketplace-contracts/build/packages/aiken-lang-stdlib/lib/aiken/dict.ak[0m:29:1]
-[1]  [2m29[0m │ pub opaque type Dict<key, value> {
-[1]  [2m30[0m │   inner: Pairs<ByteArray, value>,
-[1]     · [35;1m         ───────────┬───────────[0m
-[1]     ·                     [35;1m╰── [35;1munknown type[0m[0m
-[1]  [2m31[0m │ }
-[1]     ╰────
-[1] [36m  help: [0mDid you forget to import it?
-[1] 
-[1]       Summary 1 error, 0 warnings
-[1] aiken check exited with code 1
+[0] /bin/sh: line 1: aiken: command not found
+[1] /bin/sh: line 1: aiken: command not found
+[1] aiken check exited with code 127
+[0] aiken fmt --check exited with code 127
 
 === RAW_OUTPUT_VITEST_COVERAGE ===
+The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the resolve.tsconfigPaths option. You can remove the plugin and set resolve.tsconfigPaths: true in your Vite config instead.
 
- RUN  v2.1.9 /home/jesse/src/koralabs/handles-marketplace-contracts
+ RUN  v4.1.11 /tmp/c7-hm
       Coverage enabled with v8
 
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success
- ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler
- ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor
- ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts
-(node:1181404) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant does not throw when condition is truthy 2ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant throws with base prefix when message is missing 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > invariant supports string and function messages 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError handles undefined, strings, and message objects 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > convertError stringifies complex values and falls back when stringify fails 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFail returns Ok on success and Err on failure 2ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync resolves Ok on success 0ms
+ ✓ tests/errorHelpers.test.ts > error and invariant helpers > mayFailAsync handles errors with latest registered handler 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts +0 ADA to 0n lovelace 2ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 1 ADA to 1000000n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 0.123456 ADA to 123456n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 9e-7 ADA to 0n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 1.0000019 ADA to 1000001n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 0.30000000000000004 ADA to 300000n lovelace 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > converts 10000000000.123457 ADA to 10000000000123457n lovelace 1ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA NaN 1ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA Infinity 0ms
+ ✓ tests/cliUtilities.test.ts > CLI ADA amounts > rejects non-finite ADA -Infinity 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > uses the supplied seed "test wallet seed phrase" 2ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > uses the supplied seed "  supplied seed phrase  " 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > prompts when the seed option is undefined 1ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > prompts when the seed option is "" 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'missing seed' answer 1ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'empty seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'blank seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'numeric seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > rejects a 'null seed' answer 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > reports cancelled or rejected prompts ({}) 0ms
+ ✓ tests/cliUtilities.test.ts > CLI funding wallet seed > reports cancelled or rejected prompts ("") 0ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > preserves the cause and message of malformed YAML 9ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'preview' desired deployment YAML fixture into the normalized shape 5ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'preprod' desired deployment YAML fixture into the normalized shape 3ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > loads the 'mainnet' desired deployment YAML fixture into the normalized shape 3ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects observed-only live fields inside desired deployment YAML 2ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects missing nested settings values 1ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects missing build parameters required for hash derivation 1ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects mismatched build parameters and settings values 1ms
+ ✓ tests/deploymentState.test.ts > deployment state loader > rejects long deployment handle slugs 1ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects malformed YAML before reading deployment fields 13ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects a scalar document before reading deployment fields 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an array document before reading deployment fields 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported schema version 4ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported network 4ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported build kind 5ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects an unsupported subhandle format 2ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects mismatched slugs 2ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects hyphenated slugs 2ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects underscored slugs 1ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects empty authorizers 3ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects blank assigned handle 2ms
+ ✓ tests/deploymentStateValidation.test.ts > deployment state validation coverage > rejects non-array ignored settings 2ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'buy with zero payout offset' as the expected constructor data 1ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'buy with a later payout output offset' as the expected constructor data 0ms
+ ✓ tests/redeemer.test.ts > redeemer helpers > encodes 'withdraw or update' as the expected constructor data 0ms
+ ✓ tests/datum.test.ts > datum helpers > decodes script spending credentials in parameters datum cbor 4ms
+ ✓ tests/datum.test.ts > datum helpers > decodes staking script credentials in marketplace datum payouts 1ms
+ ✓ tests/datum.test.ts > datum helpers > rejects non-inline marketplace datums 1ms
+ ✓ tests/datum.test.ts > datum helpers > rejects parameter datum cbor without inline data 1ms
+ ✓ tests/apiHelpers.test.ts > API request helpers > sends helper API requests through cross-fetch with expected headers 3ms
+ ✓ tests/apiHelpers.test.ts > API request helpers > adds JSON headers before reading helper API response bodies 0ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > applies marketplace parameters to the optimized UPLC program 60ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > fetches the latest deployed marketplace script details 1ms
+ ✓ tests/apiHelpers.test.ts > contract API helpers > wraps deployed script lookup failures with the target network 1ms
+ ✓ tests/buildContract.test.ts > contract build helpers > builds deterministic artifacts for marketplace parameters 78ms
+ ✓ tests/buildContract.test.ts > contract build helpers > logs a deployable script detail keyed by validator address 19ms
+ ✓ tests/configAndTransactionCoverage.test.ts > top-level configuration loader > returns the configured Blockfrost key with its derived network 343ms
+ ✓ tests/configAndTransactionCoverage.test.ts > top-level configuration loader > rejects unsupported Blockfrost key network prefixes 4ms
+ ✓ tests/configAndTransactionCoverage.test.ts > deployed marketplace script metadata > exposes the latest preview marketplace deployment by script address 7ms
+ ✓ tests/configAndTransactionCoverage.test.ts > transaction logger coverage > builds transactions when the base UPLC logger has no reset hook 4ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'compiled script CBOR' 4ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'parameters datum CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'reference script UTxO' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buy' deployment metadata > rejects missing 'reference script address' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'compiled script CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'parameters datum CBOR' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'reference script UTxO' 0ms
+ ✓ tests/buyMetadata.test.ts > 'buyWithAuth' deployment metadata > rejects missing 'reference script address' 0ms
+ ✓ tests/helperUtilities.test.ts > configuration helpers > loads dotenv files and reads typed env values 5ms
+ ✓ tests/helperUtilities.test.ts > configuration helpers > returns explicit errors for missing or invalid env values 1ms
+ ✓ tests/helperUtilities.test.ts > blockfrost network helpers > detects supported Blockfrost networks from key prefixes 0ms
+ ✓ tests/helperUtilities.test.ts > blockfrost network helpers > rejects unsupported prefixes before constructing a client 1ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > finds bigint bounds across positive and negative values 0ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > resolves sleep after the requested timer delay 4ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > round-trips listing IUTxOs through TxInput conversion 9ms
+ ✓ tests/helperUtilities.test.ts > common utility helpers > omits listing datum cbor when input datum has no inline data 6ms
+ ✓ tests/helperUtilities.test.ts > contract utility helpers > fetches network parameters from the Helios status endpoint 2ms
+ ✓ tests/helperUtilities.test.ts > contract utility helpers > wraps network parameter fetch failures as Result errors 1ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > returns the built transaction and dump on success 3ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > wraps validation failures with the failed transaction details 3ms
+ ✓ tests/transactionError.test.ts > transaction error helpers > uses the latest handler when transaction building throws 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > expected script hash changes when committed marketplace build parameters change 46ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds a no-change deployment plan when live and expected hashes match 8ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds a deployment transaction plan when the live hash differs 6ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'preview' Handles API 10ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'preprod' Handles API 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > fetches live marketplace deployment state from the 'mainnet' Handles API 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > rejects live marketplace deployment responses without a script hash 1ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > surfaces failed live marketplace deployment lookups with status context 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > discovers the next available contract SubHandle ordinal 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > surfaces SubHandle probe failures with the candidate and status 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > reuses the lowest minted replacement handle before allocating a new ordinal 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > builds raw CBOR bytes and a matching hex artifact for the unsigned deployment tx 0ms
+ ✓ tests/deploymentPlan.test.ts > deployment plan helpers > rejects unsigned deployment tx artifacts that would exceed max tx size after signing 0ms
 stdout | tests/marketplace.test.ts
 Deploying to preview network...
 
 stdout | tests/marketplace.test.ts
 {
   lockerScript: {
-    script: '82018282041a06443dcd8200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    script: '82018282041a0c0927768200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
     type: 'Native',
-    address: 'addr_test1wqxu8f8ptj9ke5xwcq7y33s6n9u9yemu9p378gvk2z0hcsgwghzdv'
+    address: 'addr_test1wrrflrv8ufxm99fe5fnceq3kewrrzfhevm5hdppvechn99q80eh44'
   }
 }
+
+stdout | tests/orchestrationFailures.test.ts
+Deploying to preview network...
+
+stdout | tests/orchestrationFailures.test.ts
+{
+  lockerScript: {
+    script: '82018282041a0c0927768200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wrrflrv8ufxm99fe5fnceq3kewrrzfhevm5hdppvechn99q80eh44'
+  }
+}
+
+stdout | tests/marketplace.test.ts
 Deployed!!!
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 476ms
+stdout | tests/deploySubmit.test.ts
+Deploying to preview network...
+
+stdout | tests/deploySubmit.test.ts
+{
+  lockerScript: {
+    script: '82018282041a0c0927768200581cc2fcd5418a73f17f04c4817b139937032cf7a40a47d5fc41aa1bad07',
+    type: 'Native',
+    address: 'addr_test1wrrflrv8ufxm99fe5fnceq3kewrrzfhevm5hdppvechn99q80eh44'
+  }
+}
+
+stdout | tests/orchestrationFailures.test.ts
+Deployed!!!
+
+stdout | tests/deploySubmit.test.ts
+Deployed!!!
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 677ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 473ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 100 ada, 10% of it should go to user_3 as royalty 24ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 buy <test> handle 92ms
 stdout | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive
 Error: Tx Build Error: need 1024978245 lovelace, but only have 502116210
 
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 385ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy)
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 403ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 1000 ada, 10% of it should go to user_3 as royalty - (too expensive to buy) 13ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 fails to buy <test> handle, because that is too expensive 9ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 withdraw <test> handle - (because that is too expensive to buy) 81ms
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 338ms
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 387ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_2 list <test> handle for 200 ada, so others can buy it. 10% of which should go to user_3 as royalty 15ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 buy <test> handle using authorizer, so it doesn't pay marketplace fee 94ms
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 402ms
+stderr | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update
+Warning: way too much collateral
+
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 list <test> handle for 200 ada, 10% of it should go to user_3 as royalty 75ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_1 update <test> handle price to 50 ada, 10% of it should go to user_3 as royalty 28ms
+ ✓ tests/orchestrationFailures.test.ts > marketplace orchestration refusals > refuses broken deployed-script metadata and non-owners for list, withdraw and update 345ms
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+Deploying to preview network...
+
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+{
+  lockerScript: {
+    script: '82018282041a0c0927778200581c72ed9cc45ef8d8f3c7eed2a83345ed7e06ceff734a1087de01eaab17',
+    type: 'Native',
+    address: 'addr_test1wr4mny3s66826x9vzx0mg5awkdtwngjpfgz6x62knkfhzjcj2vxu9'
+  }
+}
+
+stdout | tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address
+Deploying to preview network...
+
 stderr | tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle
 Warning: way too much collateral
 
- ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 412ms
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Deploying to preview network...
 
- Test Files  3 passed (3)
-      Tests  20 passed (20)
-   Start at  12:19:22
-   Duration  6.31s (transform 132ms, setup 0ms, collect 2.30s, tests 3.99s, environment 0ms, prepare 196ms)
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+{
+  lockerScript: {
+    script: '82018282041a0c0927778200581c00b7847c89d5721592fc0cc8932f50a8f8258b39b93861140a1b99fb',
+    type: 'Native',
+    address: 'addr_test1wzmgsk0lu6lde3d6pejpnrh0vv3xrwzwq8n82r5qwk63n0gcgd4fs'
+  }
+}
+
+ ✓ tests/orchestrationFailures.test.ts > marketplace orchestration refusals > deploy refuses a wallet without the handle and a script-credential change address 50ms
+ ✓ tests/marketplace.test.ts > Koralab Marketplace smart contract test > user_4 buy <test> handle 69ms
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Submitting Tx...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Waiting for Transaction to be confirmed...
+
+stderr | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Warning: mempool not empty (hint: use 'network.tick()')
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Transaction confirmed, saving to file...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details
+Saved ScriptDetail to preview-deployed.json
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given
+Deploying to preview network...
+
+stdout | tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given
+{
+  lockerScript: {
+    script: '82018282041a0c0927788200581c00b7847c89d5721592fc0cc8932f50a8f8258b39b93861140a1b99fb',
+    type: 'Native',
+    address: 'addr_test1wzaef09lmpqf8mt54g32athzagykxzeaqnershjr08drccc929qeh'
+  }
+}
+
+ ✓ tests/deploySubmit.test.ts > deploy with a seed > submits, waits through a not-yet-visible output, and saves the deployed script details 788ms
+ ✓ tests/deploySubmit.test.ts > deploy with a seed > returns the unsigned transaction and writes nothing when no seed is given 393ms
+
+ Test Files  16 passed (16)
+      Tests  117 passed (117)
+   Start at  17:26:46
+   Duration  4.00s (transform 933ms, setup 0ms, import 10.78s, tests 2.87s, environment 1ms)
 
  % Coverage report from v8
 
 =============================== Coverage summary ===============================
-Statements   : 96.26% ( 309/321 )
-Branches     : 94.59% ( 70/74 )
-Functions    : 89.65% ( 26/29 )
-Lines        : 96.26% ( 309/321 )
+Statements   : 99.26% ( 135/136 )
+Branches     : 97.36% ( 37/38 )
+Functions    : 100% ( 38/38 )
+Lines        : 100% ( 131/131 )
 ================================================================================
