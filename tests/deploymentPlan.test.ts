@@ -326,3 +326,39 @@ describe("deployment plan helpers", () => {
     ).rejects.toThrow(/too large after adding 1 required signature/i);
   });
 });
+
+describe("deployment plan subhandle edge cases", () => {
+  const hash = () => buildExpectedMarketplaceScriptHash(desiredState.build.parameters);
+
+  test("refuses to plan a changed script without a replacement SubHandle (negative control: no_change reuses live handle)", () => {
+    const changed = { currentScriptHash: "00", currentSubhandle: "mkpl1@handlecontract" };
+    expect(() =>
+      buildMarketplaceDeploymentPlan({ desired: desiredState, expectedScriptHash: hash(), live: changed, nextSubhandle: null })
+    ).toThrow("deployment plan requires a resolved SubHandle");
+    const same = { currentScriptHash: hash(), currentSubhandle: "mkpl1@handlecontract" };
+    expect(
+      buildMarketplaceDeploymentPlan({ desired: desiredState, expectedScriptHash: hash(), live: same, nextSubhandle: null }).driftType
+    ).toBe("no_change");
+  });
+
+  const discover = (currentSubhandle: string | null, minted: string[]) =>
+    discoverNextContractSubhandle({
+      network: "preview",
+      deploymentHandleSlug: "mkpl",
+      namespace: "handlecontract",
+      currentSubhandle,
+      userAgent: "ua",
+      fetchFn: async (url) => new Response("{}", { status: minted.some((m) => String(url).endsWith(m)) ? 200 : 404 }),
+    });
+
+  test("with no current handle, or one that is not an ordinal of this slug, replaces after ordinal 0", async () => {
+    // mkpl1 is minted, so a replacement above ordinal 0 is the lowest minted handle
+    expect(await discover(null, ["mkpl1@handlecontract", "mkpl3@handlecontract"])).toBe("mkpl1@handlecontract");
+    expect(await discover("other1@handlecontract", ["mkpl1@handlecontract"])).toBe("mkpl1@handlecontract");
+    expect(await discover("mkplx@handlecontract", ["mkpl1@handlecontract"])).toBe("mkpl1@handlecontract");
+  });
+
+  test("when nothing is minted the first ordinal is allocated", async () => {
+    expect(await discover(null, [])).toBe("mkpl1@handlecontract");
+  });
+});

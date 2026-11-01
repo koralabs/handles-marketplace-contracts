@@ -165,3 +165,31 @@ describe("deployment state validation coverage", () => {
     );
   });
 });
+
+describe("deployment state field-type guards", () => {
+  type State = ReturnType<typeof validDesiredState>;
+  test.each([
+    ["non-string authorizer item", (s: State) => { s.build.parameters.authorizers = [5 as never]; }, "non-empty string array field `authorizers`"],
+    ["blank authorizer item", (s: State) => { s.build.parameters.authorizers = ["  "]; }, "non-empty string array field `authorizers`"],
+    ["non-numeric schema version", (s: State) => { (s as Record<string, unknown>).schema_version = "2"; }, "numeric field `schema_version`"],
+    ["NaN schema version", (s: State) => { (s as Record<string, unknown>).schema_version = Number.NaN; }, "numeric field `schema_version`"],
+    ["blank required string", (s: State) => { s.build.target = "  "; }, "string field `target`"],
+    ["blank old_script_type", (s: State) => { s.old_script_type = "  "; }, "string field `old_script_type`"],
+    ["numeric old_script_type", (s: State) => { (s as Record<string, unknown>).old_script_type = 7; }, "string field `old_script_type`"],
+  ])("rejects %s (negative control: the unmodified fixture parses)", (_name, mutate, message) => {
+    const state = validDesiredState();
+    mutate(state);
+    expect(() => parseState(state, "bad")).toThrow(message);
+    expect(parseState(validDesiredState()).network).toBe("preview");
+  });
+
+  test("a missing old_script_type is allowed and reported as null", () => {
+    const state = validDesiredState() as Record<string, unknown>;
+    delete state.old_script_type;
+    expect(parseState(state as State).oldScriptType).toBeNull();
+  });
+
+  test("a non-YAML string is reported with the parser message and source label", () => {
+    expect(() => parseDesiredDeploymentState("a: [1", "my.yaml")).toThrow(/^my\.yaml is not valid YAML: /);
+  });
+});
