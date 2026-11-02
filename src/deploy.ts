@@ -29,7 +29,7 @@ import {
   ScriptType,
 } from "@koralabs/kora-labs-common";
 import fs from "fs/promises";
-import { mayFailAsync } from "helpers/index.js";
+import { mayFailAsync } from "./helpers/index.js";
 import { Err, Ok, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID } from "./constants/index.js";
