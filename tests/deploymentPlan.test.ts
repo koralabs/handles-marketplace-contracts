@@ -118,17 +118,17 @@ describe("deployment plan helpers", () => {
     {
       network: "preview",
       expectedUrl:
-        "https://preview.api.handle.me/scripts?latest=true&type=marketplace_contract",
+        "https://preview.api.handle.me/scripts?latest=true&type=mkpl",
     },
     {
       network: "preprod",
       expectedUrl:
-        "https://preprod.api.handle.me/scripts?latest=true&type=marketplace_contract",
+        "https://preprod.api.handle.me/scripts?latest=true&type=mkpl",
     },
     {
       network: "mainnet",
       expectedUrl:
-        "https://api.handle.me/scripts?latest=true&type=marketplace_contract",
+        "https://api.handle.me/scripts?latest=true&type=mkpl",
     },
   ])(
     "fetches live marketplace deployment state from the $network Handles API",
@@ -138,14 +138,18 @@ describe("deployment plan helpers", () => {
       const requests: Array<{ url: string; headers: HeadersInit | undefined }> = [];
       const state = await fetchLiveMarketplaceDeploymentState({
         network,
-        scriptType: desiredState.oldScriptType ?? desiredState.scriptType,
+        scriptType: desiredState.scriptType,
         userAgent: "codex-test",
         fetchFn: async (url, init) => {
           requests.push({ url: String(url), headers: init?.headers });
           return new Response(
             JSON.stringify({
-              validatorHash: "cd".repeat(28),
-              handle: "mkpl9@handlecontract",
+              addr_live: {
+                type: "mkpl",
+                latest: true,
+                validatorHash: "cd".repeat(28),
+                handle: "mkpl9@handlecontract",
+              },
             }),
             { status: 200 }
           );
