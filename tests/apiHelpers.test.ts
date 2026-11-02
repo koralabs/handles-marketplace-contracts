@@ -99,21 +99,33 @@ describe("contract API helpers", () => {
       expect(Array.from(result.data.toCbor()).length).toBeGreaterThan(0);
   });
 
-  it("fetches the latest deployed marketplace script details", async () => {
-    const scriptDetails = {
+  it("fetches the latest deployed marketplace script details and its raw datum CBOR", async () => {
+    const script = {
       handle: "mp_contract",
       latest: true,
-      type: "marketplace_contract",
+      type: "mkpl",
     };
-    fetchMock.mockResolvedValue(makeJsonResponse(scriptDetails));
+    fetchMock
+      .mockResolvedValueOnce(makeJsonResponse({ addr_test1xyz: script }))
+      .mockResolvedValueOnce({
+        ok: true,
+        text: vi.fn(async () => "d8799f00ff"),
+      } as unknown as Response);
 
-    await expect(fetchDeployedScript("preview")).resolves.toEqual(
-      scriptDetails
-    );
+    await expect(fetchDeployedScript("preview")).resolves.toEqual({
+      ...script,
+      datumCbor: "d8799f00ff",
+    });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${HANDLE_API_ENDPOINT}/scripts?latest=true&type=marketplace_contract`,
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      `${HANDLE_API_ENDPOINT}/scripts?latest=true&type=mkpl`,
       { headers: expectedApiHeaders() }
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      `${HANDLE_API_ENDPOINT}/handles/mp_contract/datum`,
+      { headers: expectedApiHeaders({ Accept: "text/plain" }) }
     );
   });
 
