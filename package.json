@@ -1,6 +1,6 @@
 {
   "name": "@koralabs/handles-marketplace-contracts",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.",
   "main": "index.js",
   "type": "module",
@@ -24,7 +24,7 @@
     "@helios-lang/ledger": "^0.6.14",
     "@helios-lang/tx-utils": "^0.3.16",
     "@helios-lang/uplc": "^0.7.9",
-    "@koralabs/kora-labs-common": "^5.1.20",
+    "@koralabs/kora-labs-common": "^6.21.6",
     "commander": "^12.1.0",
     "cross-fetch": "^4.1.0",
     "decimal.js": "^10.4.3",
