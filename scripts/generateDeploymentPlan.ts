@@ -46,7 +46,7 @@ const main = async () => {
   );
   const live = await fetchLiveMarketplaceDeploymentState({
     network: desired.network,
-    scriptType: desired.oldScriptType ?? desired.scriptType,
+    scriptType: desired.scriptType,
     userAgent,
   });
   const nextSubhandle =

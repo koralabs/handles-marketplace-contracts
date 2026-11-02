@@ -69,14 +69,16 @@ const fetchLiveMarketplaceDeploymentState = async ({
   if (!response.ok) {
     throw new Error(`failed to load live ${scriptType} script: HTTP ${response.status}`);
   }
-  const payload = (await response.json()) as Record<string, unknown>;
-  const currentScriptHash = String(
-    payload.validatorHash ?? payload.scriptHash ?? ""
-  ).trim();
+  // /scripts is keyed by script address and `type` is a prefix match, so pick this
+  // script's own latest entry.
+  const payload = Object.values(
+    (await response.json()) as Record<string, Record<string, unknown>>
+  ).find((entry) => entry.type === scriptType && entry.latest);
+  const currentScriptHash = String(payload?.validatorHash ?? "").trim();
   if (!currentScriptHash) {
     throw new Error(`live ${scriptType} script response missing validatorHash/scriptHash`);
   }
-  const currentSubhandle = String(payload.handle ?? "").trim() || null;
+  const currentSubhandle = String(payload?.handle ?? "").trim() || null;
   return {
     currentScriptHash,
     currentSubhandle,
