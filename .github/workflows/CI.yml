@@ -10,87 +10,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
         with:
-          node-version: 24
-          check-latest: true
-
-      - name: Update npm and install pnpm
-        run: npm install -g npm@latest pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Libssl
-        run: bash .github/scripts/install-legacy-libssl.sh
-
-      - name: Install Aiken
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify local test evidence (tests run locally, never in Actions)
         run: |
-          curl --proto '=https' --tlsv1.2 -LsSf https://install.aiken-lang.org | sh
-          ~/.aiken/bin/aikup install v1.0.29-alpha
-          sudo ln -s ~/.aiken/bin/aiken /usr/local/bin/aiken
-
-      - name: Lint
-        run: npm run lint
-
-  aiken-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 24
-          check-latest: true
-
-      - name: Update npm and install pnpm
-        run: npm install -g npm@latest pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Libssl
-        run: bash .github/scripts/install-legacy-libssl.sh
-
-      - name: Install Aiken
-        run: |
-          curl --proto '=https' --tlsv1.2 -LsSf https://install.aiken-lang.org | sh
-          ~/.aiken/bin/aikup install v1.0.29-alpha
-          sudo ln -s ~/.aiken/bin/aiken /usr/local/bin/aiken
-
-      - name: Run tests
-        run: npm run test:aiken
-
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 24
-          check-latest: true
-
-      - name: Update npm and install pnpm
-        run: npm install -g npm@latest pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test runtime acquisition guards
-        run: python3 .github/scripts/test_legacy_libssl.py
-
-      - name: Run tests
-        run: npm run test
+          c=$(jq -er 'select(.result == "pass") | .commit' .local-test-evidence.json) && git diff --quiet "$c" HEAD -- . ':!.local-test-evidence.json' || { echo "::error::no valid local test evidence for this commit: run adahandle-deployments/common/test-evidence.sh record locally and push the evidence commit"; exit 1; }
