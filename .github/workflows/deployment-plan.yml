@@ -47,6 +47,9 @@ jobs:
       - name: Run setup command
         run: npm install -g pnpm
 
+      - name: Authenticate GitHub Packages
+        run: npm config set //npm.pkg.github.com/:_authToken ${{ secrets.DEPLOYMENT_ACCESS_TOKEN }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

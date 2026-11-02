@@ -4,6 +4,9 @@ packages:
 allowBuilds:
   esbuild: true
 
+minimumReleaseAgeExclude:
+  - '@koralabs/kora-labs-common@6.21.6'
+
 overrides:
   ajv: 6.14.0
   base-x: 5.0.1

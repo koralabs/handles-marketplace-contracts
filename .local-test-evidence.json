@@ -1,6 +1,6 @@
 {
-  "commit": "e2e7bf14f4df8716546504ad466f4670ff4af2b7",
+  "commit": "fd62c4fa9ef4cb1eaa78a46b669511276893b0b2",
   "result": "pass",
-  "command": "npx vitest run --maxWorkers=4",
-  "at": "2026-11-02T07:38:50Z"
+  "command": "scripts/local-tests.sh",
+  "at": "2026-11-02T07:44:40Z"
 }
