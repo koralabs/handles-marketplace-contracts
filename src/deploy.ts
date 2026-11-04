@@ -29,7 +29,6 @@ import {
   ScriptType,
 } from "@koralabs/kora-labs-common";
 import fs from "fs/promises";
-import { mayFailAsync } from "./helpers/index.js";
 import { Err, Ok, Result } from "ts-res";
 
 import { HANDLE_POLICY_ID } from "./constants/index.js";
@@ -38,6 +37,7 @@ import {
   unoptimizedCompiledCode,
 } from "./contracts/plutus-v2/contract.js";
 import { buildSCParametersDatum, makeSCParametersUplcValues } from "./datum.js";
+import { mayFailAsync } from "./helpers/index.js";
 import { BuildTxError, Parameters } from "./types.js";
 import { fetchNetworkParameters, sleep } from "./utils/index.js";
 
